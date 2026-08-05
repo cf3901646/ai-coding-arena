@@ -48,7 +48,7 @@ const CRITERIA = [
 /**
  * 4) 打分与元信息数据
  * 结构：SCORES[scenarioId][aiId] = { criteria: {...}, timeSpent, files, notes, demoPath, screenshot }
- * racing-game 已接入4个AI的真实产出文件，打分/耗时/点评已根据实际体验填写
+ * racing-game 已接入4个AI的真实产出文件，打分/耗时/点评仍为占位，请实际体验后填写
  */
 const SCORES = {
   "racing-game": {
@@ -139,8 +139,8 @@ const SCORES = {
   },
 };
 
-// 5) 首页总体结论（给领导看的一句话总结）
+// 5) 首页总体结论（给领导看的一句话总结，填完分数后建议手动更新这里）
 const SUMMARY = {
-  headline: "简单赛车游戏场景：Kiro 综合表现最佳（51/60），有明确玩法与流畅操控；GitHub Copilot 操控流畅但缺乏玩法设计（36/60）；Antigravity 画面花哨但无实际玩法且有操控bug（27/60）；Codex 整体最弱（19/60）。飞利浦编年史与数据看板场景评测进行中。",
-  recommendation: "当前阶段（赛车游戏场景）推荐优先考虑 Kiro，其次 GitHub Copilot；最终结论待三个场景全部评测完成后综合判断。",
+  headline: "评测结论待填写（例如：综合来看 XX 在代码质量与一次成型度上领先，YY 在视觉设计上更出色…）",
+  recommendation: "推荐使用：待填写",
 };
