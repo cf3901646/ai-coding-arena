@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>场景对比 · AI 能力对比评测</title>
+<link rel="stylesheet" href="../assets/css/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body data-scenario="dashboard">
+<header class="top">
+  <div class="container" style="padding:0;">
+    <h1 id="scenario-title">简单赛车游戏</h1>
+    <p id="scenario-desc"></p>
+  </div>
+</header>
+
+<div class="container">
+  <nav class="tabs">
+    <a href="../index.html">总览</a>
+    <a href="racing-game.html" class="active">赛车游戏</a>
+    <a href="philips-chronicle.html">飞利浦编年史</a>
+    <a href="dashboard.html">数据可视化看板</a>
+  </nav>
+
+  <h2 class="section-title">4个AI的产出对比（可直接运行 Demo）</h2>
+  <div class="ai-cards" id="ai-cards"></div>
+
+  <h2 class="section-title">本场景各维度得分对比</h2>
+  <div class="chart-wrap">
+    <canvas id="scenarioRadarChart" height="320"></canvas>
+  </div>
+</div>
+
+<footer>由内部 AI 能力评测项目自动生成</footer>
+
+<script src="../assets/js/scores-data.js"></script>
+<script src="../assets/js/scenario.js"></script>
+</body>
+</html>

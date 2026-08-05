@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 能力对比评测 · 展示首页</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+<header class="top">
+  <div class="container" style="padding:0;">
+    <h1>4款 AI 能力横向评测</h1>
+    <p>通过 3 个统一场景（简单赛车游戏 / 飞利浦编年史页面 / 数据可视化看板）对比 4 个 AI 的实际产出，辅助团队选型决策。</p>
+  </div>
+</header>
+
+<div class="container">
+  <nav class="tabs">
+    <a href="index.html" class="active">总览</a>
+    <a href="scenarios/racing-game.html">赛车游戏</a>
+    <a href="scenarios/philips-chronicle.html">飞利浦编年史</a>
+    <a href="scenarios/dashboard.html">数据可视化看板</a>
+  </nav>
+
+  <div class="summary-card">
+    <h2>评测结论</h2>
+    <div id="summary-content">加载中...</div>
+  </div>
+
+  <h2 class="section-title">测试场景</h2>
+  <div class="grid" id="scenario-grid"></div>
+
+  <h2 class="section-title">综合能力雷达图</h2>
+  <div class="chart-wrap">
+    <canvas id="radarChart" height="360"></canvas>
+  </div>
+
+  <h2 class="section-title">分维度平均得分表（跨3个场景）</h2>
+  <div id="overall-table"></div>
+</div>
+
+<footer>由内部 AI 能力评测项目自动生成 · 数据来源：assets/js/scores-data.js</footer>
+
+<script src="assets/js/scores-data.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
