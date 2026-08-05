@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大世界飘车 - Open World Drive</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%;
+    background: #111; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; user-select: none;
+  }
+  canvas { display: block; }
+  #game { position: absolute; top: 0; left: 0; }
+  #minimap { position: absolute; top: 16px; right: 16px; border: 2px solid rgba(255,255,255,0.6); border-radius: 8px; background: rgba(10,20,10,0.55); box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+  #hud { position: absolute; top: 16px; left: 16px; color: #eafff0; text-shadow: 0 1px 3px #000; font-size: 15px; line-height: 1.5; pointer-events: none; }
+  #hud .big { font-size: 28px; font-weight: bold; letter-spacing: 1px; }
+  #barWrap { width: 180px; height: 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.4); border-radius: 6px; overflow: hidden; margin-top: 3px; }
+  #nitroBar { height: 100%; width: 100%; background: linear-gradient(90deg,#00d4ff,#7a5cff); transition: width 0.1s linear; }
+  #msgCenter { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); color: #fff; font-size: 42px; font-weight: bold; text-shadow: 0 2px 10px #000; pointer-events: none; text-align: center; opacity: 0; transition: opacity 0.4s; }
+  #startScreen { position: absolute; inset: 0; background: radial-gradient(circle at 50% 30%, #234, #0a0f14 75%); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; z-index: 10; }
+  #startScreen h1 { font-size: 48px; margin-bottom: 6px; text-shadow: 0 3px 12px rgba(0,200,255,0.5); }
+  #startScreen p { font-size: 16px; opacity: 0.85; margin: 4px 0; max-width: 600px; }
+  #startScreen button { margin-top: 22px; padding: 14px 38px; font-size: 20px; border: none; border-radius: 30px; background: linear-gradient(90deg,#00d4ff,#7a5cff); color: #fff; cursor: pointer; font-weight: bold; box-shadow: 0 6px 18px rgba(0,150,255,0.4); }
+  #startScreen button:hover { filter: brightness(1.15); }
+  kbd { background: #333; border: 1px solid #666; border-radius: 4px; padding: 1px 7px; margin: 0 2px; font-family: monospace; }
+  #pauseOverlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); color: #fff; display: none; align-items: center; justify-content: center; font-size: 36px; flex-direction: column; }
+  #compass { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 14px; text-shadow: 0 1px 3px #000; text-align: center; }
+</style>
+</head>
+<body>
+<div id="startScreen">
+  <h1>🚗 大世界飘车 Open World Drive</h1>
+  <p>在这片自由开放的大世界里驾驶：城市、乡村、沙漠与湖泊一应俱全。</p>
+  <p><kbd>W</kbd> 加速 &nbsp; <kbd>S</kbd> 刹车/倒车 &nbsp; <kbd>A</kbd>/<kbd>D</kbd> 转向 &nbsp; <kbd>Space</kbd> 手刹漂移 &nbsp; <kbd>Shift</kbd> 氮气加速 &nbsp; <kbd>P</kbd> 暂停</p>
+  <p>收集金币获得分数，沿高速环路完成圈数挑战，小心不要撞车撞树！</p>
+  <button id="startBtn">开始游戏</button>
+</div>
+<div id="pauseOverlay"><div>已暂停</div><div style="font-size:16px;margin-top:10px;opacity:0.8">按 P 继续</div></div>
+<canvas id="game"></canvas>
+<canvas id="minimap" width="220" height="220"></canvas>
+<div id="hud">
+  <div class="big" id="speedTxt">0 <span style="font-size:14px">km/h</span></div>
+  <div>氮气 Nitro</div>
+  <div id="barWrap"><div id="nitroBar"></div></div>
+  <div style="margin-top:8px">💰 金币: <span id="coinTxt">0</span>/<span id="coinTotalTxt">0</span></div>
+  <div>🏁 圈数: <span id="lapTxt">0</span></div>
+  <div>⏱ 时间: <span id="timeTxt">0:00</span></div>
+  <div>🔥 连击: <span id="comboTxt">0</span></div>
+</div>
+<div id="compass"><span id="compassArrow" style="display:inline-block">▲</span> 下一目标</div>
+<div id="msgCenter"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================= 基础设置 Setup ============================= */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const mmCanvas = document.getElementById('minimap');
+const mmCtx = mmCanvas.getContext('2d');
+
+let W = window.innerWidth, H = window.innerHeight;
+function resize(){ W = window.innerWidth; H = window.innerHeight; canvas.width = W; canvas.height = H; }
+window.addEventListener('resize', resize);
+resize();
+
+// 简单可重复的伪随机数生成器 (mulberry32)
+function makeRand(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rand = makeRand(20240613);
+
+const WORLD_SIZE = 7000; // 世界为正方形, 中心在 (0,0), 范围 [-3500, 3500]
+const HALF = WORLD_SIZE/2;
+
+/* ============================= 世界生成 World Generation ============================= */
+// 主环形高速公路（圆角矩形路径，控制点数组）+ 城市内部网格路 + 乡村支路
+const roadWidth = 46;
+const highwayPts = [];
+{
+  const cx=0, cy=0, rx=2600, ry=2000, N=64;
+  for(let i=0;i<N;i++){
+    const t = i/N*Math.PI*2;
+    // 使用超樭圆让形状更像跑道而不是纯圆
+    const ex = Math.sign(Math.cos(t))*Math.pow(Math.abs(Math.cos(t)), 0.7);
+    const ey = Math.sign(Math.sin(t))*Math.pow(Math.abs(Math.sin(t)), 0.7);
+    highwayPts.push({x: cx+ex*rx, y: cy+ey*ry});
+  }
+}
+// 检查点（沿高速公路均匀取点，用于计圈）
+const checkpoints = [];
+for(let i=0;i<8;i++){
+  const idx = Math.floor(i/8*highwayPts.length);
+  checkpoints.push({x: highwayPts[idx].x, y: highwayPts[idx].y, r: 90});
+}
+
+// 城市网格道路（矩形区域，位于地图中偏左侧）
+const cityRoads = []; // 每条为 {x1,y1,x2,y2}
+const cityMinX=-1300, cityMaxX=-100, cityMinY=-900, cityMaxY=900, cityStep=220;
+for(let x=cityMinX; x<=cityMaxX; x+=cityStep){
+  cityRoads.push({x1:x, y1:cityMinY, x2:x, y2:cityMaxY});
+}
+for(let y=cityMinY; y<=cityMaxY; y+=cityStep){
+  cityRoads.push({x1:cityMinX, y1:y, x2:cityMaxX, y2:y});
+}
+
+// 建筑物（放在城市网格的格子中央，避开道路）
+const buildings = [];
+for(let x=cityMinX+cityStep/2; x<cityMaxX; x+=cityStep){
+  for(let y=cityMinY+cityStep/2; y<cityMaxY; y+=cityStep){
+    if(rand() < 0.85){
+      const w = 70 + rand()*90, h = 70 + rand()*90;
+      buildings.push({x, y, w, h, color: `hsl(${200+rand()*40},18%,${22+rand()*18}%)`, height: 40+rand()*140});
+    }
+  }
+}
+
+// 湖泊（地图右上方）
+const lake = {x: 1900, y: -1500, r: 620};
+// 沙漠区域（地图右下方，只是视觉底色范围，圆形边界模糊）
+const desert = {x: 1600, y: 1500, r: 1300};
+
+// 树木、岩石、仙人掌散布
+const trees = [], rocks = [], cacti = [];
+function farFromRoads(x,y,minDist){
+  // 距高速公路
+  for(const p of highwayPts){ if(Math.hypot(p.x-x,p.y-y) < minDist) return false; }
+  for(const r of cityRoads){
+    const d = distToSeg(x,y,r.x1,r.y1,r.x2,r.y2);
+    if(d < minDist) return false;
+  }
+  return true;
+}
+function distToSeg(px,py,x1,y1,x2,y2){
+  const dx=x2-x1, dy=y2-y1;
+  const len2 = dx*dx+dy*dy || 1;
+  let t = ((px-x1)*dx+(py-y1)*dy)/len2;
+  t = Math.max(0, Math.min(1, t));
+  const cx = x1+t*dx, cy = y1+t*dy;
+  return Math.hypot(px-cx, py-cy);
+}
+function inRect(x,y,r){ return x>r.x-5 && x<r.x+r.w+5 && y>r.y-5 && y<r.y+r.h+5; }
+
+for(let i=0;i<1600;i++){
+  const x = (rand()*2-1)*HALF*0.96;
+  const y = (rand()*2-1)*HALF*0.96;
+  const dLake = Math.hypot(x-lake.x, y-lake.y);
+  const dDesert = Math.hypot(x-desert.x, y-desert.y);
+  if(dLake < lake.r+40) continue; // 避开湖面
+  let inBuilding = false;
+  for(const b of buildings){ if(inRect(x,y,{x:b.x-b.w/2,y:b.y-b.h/2,w:b.w,h:b.h})){ inBuilding=true; break; } }
+  if(inBuilding) continue;
+  if(!farFromRoads(x,y,60)) continue;
+  if(dDesert < desert.r*0.9 && rand() < 0.85){
+    cacti.push({x,y,s: 18+rand()*14});
+  } else if(rand() < 0.5){
+    trees.push({x,y,s: 16+rand()*18});
+  } else if(rand() < 0.3){
+    rocks.push({x,y,s: 10+rand()*16});
+  }
+}
+
+// 金币散布在道路附近
+const coins = [];
+function scatterCoinsAlong(points, count, spread){
+  for(let i=0;i<count;i++){
+    const p = points[Math.floor(rand()*points.length)];
+    coins.push({x:p.x+(rand()*2-1)*spread, y:p.y+(rand()*2-1)*spread, taken:false, spin:rand()*Math.PI*2});
+  }
+}
+scatterCoinsAlong(highwayPts, 90, 70);
+const cityPts = cityRoads.map(r=>({x:(r.x1+r.x2)/2, y:(r.y1+r.y2)/2}));
+scatterCoinsAlong(cityPts.length?cityPts:[{x:0,y:0}], 40, 90);
+const TOTAL_COINS = coins.length;
+
+/* ============================= 地形判定 Terrain ============================= */
+function onHighway(x,y){
+  for(let i=0;i<highwayPts.length;i++){
+    const a = highwayPts[i], b = highwayPts[(i+1)%highwayPts.length];
+    if(distToSeg(x,y,a.x,a.y,b.x,b.y) < roadWidth/2) return true;
+  }
+  return false;
+}
+function onCityRoad(x,y){
+  for(const r of cityRoads){ if(distToSeg(x,y,r.x1,r.y1,r.x2,r.y2) < roadWidth/2*0.85) return true; }
+  return false;
+}
+function terrainAt(x,y){
+  if(onHighway(x,y) || onCityRoad(x,y)) return 'road';
+  const dLake = Math.hypot(x-lake.x, y-lake.y);
+  if(dLake < lake.r) return 'water';
+  const dDesert = Math.hypot(x-desert.x, y-desert.y);
+  if(dDesert < desert.r) return 'sand';
+  if(x>cityMinX-60 && x<cityMaxX+60 && y>cityMinY-60 && y<cityMaxY+60) return 'urban';
+  return 'grass';
+}
+const TERRAIN_GRIP = { road:1.0, urban:0.92, grass:0.72, sand:0.55, water:0.32 };
+const TERRAIN_MAXSPEED = { road:1.0, urban:0.95, grass:0.8, sand:0.65, water:0.4 };
+
+/* ============================= 玩家车辆 Car ============================= */
+const car = {
+  x: highwayPts[0].x, y: highwayPts[0].y - 40,
+  angle: -Math.PI/2, // 朝向弧度
+  speed: 0,          // 当前沿车头方向速度 (px/s)
+  lateral: 0,        // 侧向滑动速度（漂移用）
+  steerAngleVisual: 0,
+  nitro: 100,
+  width: 20, length: 38,
+  score: 0,
+  coinsCollected: 0,
+  laps: 0,
+  combo: 0,
+  comboTimer: 0,
+  health: 100,
+};
+let lastCheckpointIdx = 0;
+let progressAroundLoop = 0;
+
+const MAX_ENGINE_SPEED = 620; // px/s 基础最高速度（未加成）
+const ACCEL = 380;
+const BRAKE = 620;
+const REVERSE_MAX = 220;
+const NATURAL_DECEL = 140;
+const STEER_RATE = 2.6; // rad/s at low speed reference
+
+/* ============================= 输入 Input ============================= */
+const keys = Object.create(null);
+window.addEventListener('keydown', e=>{
+  keys[e.key.toLowerCase()] = true;
+  if(e.key === ' ') e.preventDefault();
+  if(e.key.toLowerCase()==='p') togglePause();
+});
+window.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; });
+window.addEventListener('blur', ()=>{ for(const k in keys) keys[k]=false; });
+
+let paused = false;
+function togglePause(){
+  if(!started) return;
+  paused = !paused;
+  document.getElementById('pauseOverlay').style.display = paused ? 'flex' : 'none';
+}
+
+/* ============================= 音效 Audio (合成，无需外部文件) ============================= */
+let audioCtx = null, engineOsc = null, engineGain = null;
+function initAudio(){
+  if(audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  engineOsc = audioCtx.createOscillator();
+  engineOsc.type = 'sawtooth';
+  engineGain = audioCtx.createGain();
+  engineGain.gain.value = 0.0;
+  engineOsc.connect(engineGain).connect(audioCtx.destination);
+  engineOsc.frequency.value = 60;
+  engineOsc.start();
+}
+function playBlip(freq, dur, type, vol){
+  if(!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type || 'square';
+  o.frequency.value = freq;
+  g.gain.value = vol!==undefined?vol:0.2;
+  o.connect(g).connect(audioCtx.destination);
+  g.gain.setValueAtTime(g.gain.value, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  o.start();
+  o.stop(audioCtx.currentTime + dur + 0.02);
+}
+function playCoin(){ playBlip(880, 0.12, 'triangle', 0.18); playBlip(1320, 0.12, 'triangle', 0.12); }
+function playCrash(){ playBlip(90, 0.25, 'sawtooth', 0.3); }
+function playLap(){ playBlip(660,0.15,'square',0.2); setTimeout(()=>playBlip(990,0.2,'square',0.2), 120); }
+let skidSoundTimer = 0;
+
+/* ============================= 粒子/尾迹 Effects ============================= */
+let skidMarks = []; // {x,y,alpha}
+let dustParticles = []; // {x,y,vx,vy,life}
+function spawnDust(x,y,n){
+  for(let i=0;i<n;i++){
+    dustParticles.push({x,y, vx:(rand()*2-1)*40, vy:(rand()*2-1)*40, life:0.6+rand()*0.4, age:0});
+  }
+}
+
+/* ============================= AI 交通车辆 ============================= */
+const aiCars = [];
+const AI_COUNT = 7;
+for(let i=0;i<AI_COUNT;i++){
+  const idx = Math.floor(i/AI_COUNT*highwayPts.length);
+  aiCars.push({ t: idx, speed: 160+rand()*90, color: `hsl(${Math.floor(rand()*360)},70%,55%)`, x:0,y:0,angle:0 });
+}
+function updateAI(dt){
+  for(const c of aiCars){
+    const advance = c.speed*dt/12; // 沿点数组前进的"下标增量"
+    c.t = (c.t + advance) % highwayPts.length;
+    const i0 = Math.floor(c.t) % highwayPts.length;
+    const i1 = (i0+1) % highwayPts.length;
+    const f = c.t - Math.floor(c.t);
+    const p0 = highwayPts[i0], p1 = highwayPts[i1];
+    c.x = p0.x + (p1.x-p0.x)*f;
+    c.y = p0.y + (p1.y-p0.y)*f;
+    c.angle = Math.atan2(p1.y-p0.y, p1.x-p0.x);
+  }
+}
+
+/* ============================= 摄像机 Camera ============================= */
+const camera = { x: car.x, y: car.y, zoom: 1 };
+
+/* ============================= 昼夜循环 Day/Night ============================= */
+let worldTime = 0.25; // 0..1, 0.25 ~ 早晨
+
+/* ============================= 碰撞辅助 Collision ============================= */
+function circleRectCollide(cx,cy,cr, rx,ry,rw,rh){
+  const nx = Math.max(rx-rw/2, Math.min(cx, rx+rw/2));
+  const ny = Math.max(ry-rh/2, Math.min(cy, ry+rh/2));
+  const dx = cx-nx, dy = cy-ny;
+  return (dx*dx+dy*dy) < cr*cr;
+}
+
+/* ============================= 主更新 Update ============================= */
+let elapsed = 0;
+let started = false;
+let messageTimer = 0;
+
+function showMessage(text, dur){
+  const el = document.getElementById('msgCenter');
+  el.textContent = text;
+  el.style.opacity = 1;
+  messageTimer = dur || 1.6;
+}
+
+function update(dt){
+  if(paused) return;
+  elapsed += dt;
+  worldTime += dt*0.004; // 缓慢昼夜循环
+  if(worldTime>1) worldTime -= 1;
+
+  const terrain = terrainAt(car.x, car.y);
+  const grip = TERRAIN_GRIP[terrain];
+  const maxSpeedMul = TERRAIN_MAXSPEED[terrain];
+
+  // 油门/刹车
+  const throttle = keys['w'] ? 1 : 0;
+  const brake = keys['s'] ? 1 : 0;
+  const nitroActive = (keys['shift']) && car.nitro > 2;
+  const handbrake = keys[' '] || keys['spacebar'];
+
+  let maxSpeed = MAX_ENGINE_SPEED * maxSpeedMul * (nitroActive ? 1.55 : 1);
+
+  if(throttle){
+    car.speed += ACCEL * dt * (nitroActive?1.6:1);
+  } else if(brake){
+    if(car.speed > 10) car.speed -= BRAKE*dt;
+    else car.speed -= ACCEL*0.6*dt; // 倒车加速
+  } else {
+    // 自然减速
+    if(car.speed > 0) car.speed = Math.max(0, car.speed - NATURAL_DECEL*dt);
+    else if(car.speed < 0) car.speed = Math.min(0, car.speed + NATURAL_DECEL*dt);
+  }
+  car.speed = Math.max(-REVERSE_MAX, Math.min(maxSpeed, car.speed));
+
+  if(nitroActive){ car.nitro = Math.max(0, car.nitro - dt*32); }
+  else { car.nitro = Math.min(100, car.nitro + dt*9); }
+
+  // 转向：速度越快转向越灵敏但需要更高抱地力，转向幅度随速度略降低以模拟真实感
+  const speedFactor = Math.min(1, Math.abs(car.speed)/220);
+  let steerInput = 0;
+  if(keys['a']) steerInput -= 1;
+  if(keys['d']) steerInput += 1;
+  const dir = car.speed >= 0 ? 1 : -1;
+  const steerStrength = STEER_RATE * (0.4 + 0.6*speedFactor) * (handbrake?1.25:1);
+  car.angle += steerInput * steerStrength * dt * dir;
+
+  // 漂移：手刹时降低抱地力，产生侧向滑动
+  const effectiveGrip = handbrake ? grip*0.45 : grip;
+  const forwardX = Math.cos(car.angle), forwardY = Math.sin(car.angle);
+  // 目标侧向速度来自转向输入 * 速度，抱地力决定车辆多大程度上抵消侧滑
+  const desiredLateral = steerInput * Math.abs(car.speed) * 0.55 * dir;
+  car.lateral += (desiredLateral - car.lateral) * Math.min(1, (1-effectiveGrip*0.85+0.15) * dt * 6);
+
+  const isDrifting = handbrake && Math.abs(car.lateral) > 60 && Math.abs(car.speed) > 80;
+
+  // 位移
+  const rightX = -forwardY, rightY = forwardX;
+  let nx = car.x + forwardX*car.speed*dt + rightX*car.lateral*dt;
+  let ny = car.y + forwardY*car.speed*dt + rightY*car.lateral*dt;
+
+  // 世界边界
+  nx = Math.max(-HALF+40, Math.min(HALF-40, nx));
+  ny = Math.max(-HALF+40, Math.min(HALF-40, ny));
+
+  // 建筑碰撞检测（简单推回）
+  let collided = false;
+  for(const b of buildings){
+    if(circleRectCollide(nx, ny, car.width*0.55, b.x, b.y, b.w, b.h)){
+      collided = true; break;
+    }
+  }
+  // 树/岩石碰撞
+  if(!collided){
+    for(const t of trees){ if(Math.hypot(nx-t.x, ny-t.y) < t.s*0.55+10){ collided = true; break; } }
+  }
+  if(!collided){
+    for(const r of rocks){ if(Math.hypot(nx-r.x, ny-r.y) < r.s*0.6+10){ collided = true; break; } }
+  }
+
+  if(collided){
+    car.speed *= -0.35;
+    car.lateral *= -0.3;
+    car.health = Math.max(0, car.health - Math.abs(car.speed)*0.02 - 3);
+    playCrash();
+    spawnDust(car.x, car.y, 10);
+    car.combo = 0;
+  } else {
+    car.x = nx; car.y = ny;
+  }
+
+  // AI车辆碰撞（弹开双方）
+  for(const c of aiCars){
+    const d = Math.hypot(car.x-c.x, car.y-c.y);
+    if(d < 26){
+      const ang = Math.atan2(car.y-c.y, car.x-c.x);
+      car.x += Math.cos(ang)*6; car.y += Math.sin(ang)*6;
+      car.speed *= 0.55;
+      playCrash();
+      car.combo = 0;
+    }
+  }
+
+  // 水中：缓慢下沉感（额外减速+扣血）
+  if(terrain === 'water'){
+    car.health = Math.max(0, car.health - dt*4);
+  } else if(car.health < 100){
+    car.health = Math.min(100, car.health + dt*2);
+  }
+
+  // 漂移尾迹与灰尘
+  if(isDrifting){
+    skidMarks.push({x: car.x - forwardX*10, y: car.y - forwardY*10, alpha: 0.5});
+    if(skidMarks.length > 400) skidMarks.shift();
+    if(rand()<0.6) spawnDust(car.x, car.y, 1);
+  }
+  if(terrain === 'grass' || terrain === 'sand'){
+    if(Math.abs(car.speed) > 120 && rand() < 0.25) spawnDust(car.x - forwardX*16, car.y - forwardY*16, 1);
+  }
+
+  // 更新灰尘粒子
+  for(let i=dustParticles.length-1;i>=0;i--){
+    const p = dustParticles[i];
+    p.age += dt;
+    p.x += p.vx*dt; p.y += p.vy*dt;
+    if(p.age > p.life) dustParticles.splice(i,1);
+  }
+  // 淡化尾迹
+  for(let i=skidMarks.length-1;i>=0;i--){
+    skidMarks[i].alpha -= dt*0.08;
+    if(skidMarks[i].alpha<=0) skidMarks.splice(i,1);
+  }
+
+  // 引擎音效
+  if(audioCtx){
+    const target = 70 + Math.min(1,Math.abs(car.speed)/MAX_ENGINE_SPEED)*260 + (nitroActive?60:0);
+    engineOsc.frequency.value += (target - engineOsc.frequency.value)*0.15;
+    const vol = 0.02 + Math.min(0.16, Math.abs(car.speed)/MAX_ENGINE_SPEED*0.16);
+    engineGain.gain.value += (vol - engineGain.gain.value)*0.2;
+  }
+  skidSoundTimer -= dt;
+  if(isDrifting && skidSoundTimer<=0){ playBlip(220+rand()*40, 0.15, 'sawtooth', 0.05); skidSoundTimer = 0.18; }
+
+  // 金币收集
+  for(const coin of coins){
+    if(coin.taken) continue;
+    coin.spin += dt*4;
+    if(Math.hypot(car.x-coin.x, car.y-coin.y) < 30){
+      coin.taken = true;
+      car.coinsCollected++;
+      car.combo++;
+      car.comboTimer = 3;
+      car.score += 10 * (1+Math.min(car.combo,10)*0.1);
+      playCoin();
+    }
+  }
+  if(car.comboTimer>0){ car.comboTimer -= dt; if(car.comboTimer<=0) car.combo = 0; }
+
+  // 圈数检测：判断车辆最接近的高速路点下标是否递增穿越一圈
+  {
+    let nearestIdx = 0, nearestD = Infinity;
+    for(let i=0;i<highwayPts.length;i++){
+      const d = Math.hypot(car.x-highwayPts[i].x, car.y-highwayPts[i].y);
+      if(d<nearestD){ nearestD=d; nearestIdx=i; }
+    }
+    if(nearestD < 260){
+      const n = highwayPts.length;
+      let delta = nearestIdx - lastCheckpointIdx;
+      if(delta < -n/2) delta += n; // 环绕
+      if(delta > n/2) delta -= n;
+      progressAroundLoop += delta;
+      lastCheckpointIdx = nearestIdx;
+      if(progressAroundLoop >= n){
+        progressAroundLoop -= n;
+        car.laps++;
+        car.score += 100;
+        playLap();
+        showMessage('🏁 完成一圈！ Lap ' + car.laps, 1.8);
+      }
+    }
+  }
+
+  updateAI(dt);
+
+  // 摄像机跟随（带一点预判）
+  const lookAhead = 60;
+  const targetCamX = car.x + Math.cos(car.angle)*lookAhead*Math.sign(car.speed||1)*0.4;
+  const targetCamY = car.y + Math.sin(car.angle)*lookAhead*Math.sign(car.speed||1)*0.4;
+  camera.x += (targetCamX - camera.x) * Math.min(1, dt*3.2);
+  camera.y += (targetCamY - camera.y) * Math.min(1, dt*3.2);
+  const speedZoomTarget = 1 - Math.min(0.22, Math.abs(car.speed)/MAX_ENGINE_SPEED*0.22);
+  camera.zoom += (speedZoomTarget - camera.zoom)*dt*2;
+
+  if(messageTimer>0){
+    messageTimer -= dt;
+    if(messageTimer<=0) document.getElementById('msgCenter').style.opacity = 0;
+  }
+
+  updateHUD(terrain);
+}
+
+/* ============================= HUD ============================= */
+function updateHUD(terrain){
+  document.getElementById('speedTxt').innerHTML = Math.round(Math.abs(car.speed)*0.6) + ' <span style="font-size:14px">km/h</span>';
+  document.getElementById('nitroBar').style.width = car.nitro + '%';
+  document.getElementById('coinTxt').textContent = car.coinsCollected;
+  document.getElementById('coinTotalTxt').textContent = TOTAL_COINS;
+  document.getElementById('lapTxt').textContent = car.laps;
+  document.getElementById('comboTxt').textContent = car.combo;
+  const m = Math.floor(elapsed/60), s = Math.floor(elapsed%60);
+  document.getElementById('timeTxt').textContent = m + ':' + (s<10?'0':'')+s;
+}
+
+/* ============================= 渲染 Render ============================= */
+function skyColor(t){
+  // t: 0..1 循环，模拟昼夜
+  const stops = [
+    {p:0.0, c:[10,12,40]},   // 深夜
+    {p:0.22,c:[255,175,110]},// 日出
+    {p:0.32,c:[140,200,255]},// 上午
+    {p:0.65,c:[110,180,250]},// 白天
+    {p:0.78,c:[255,140,90]}, // 日落
+    {p:0.9, c:[30,20,60]},   // 傍晚
+    {p:1.0, c:[10,12,40]},
+  ];
+  for(let i=0;i<stops.length-1;i++){
+    if(t>=stops[i].p && t<=stops[i+1].p){
+      const f = (t-stops[i].p)/(stops[i+1].p-stops[i].p);
+      const a = stops[i].c, b = stops[i+1].c;
+      return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`;
+    }
+  }
+  return 'rgb(110,180,250)';
+}
+function isNight(){ return worldTime < 0.2 || worldTime > 0.85; }
+
+function worldToScreen(x,y){
+  return { x: (x-camera.x)*camera.zoom + W/2, y: (y-camera.y)*camera.zoom + H/2 };
+}
+
+function render(){
+  // 天空/背景
+  ctx.fillStyle = skyColor(worldTime);
+  ctx.fillRect(0,0,W,H);
+
+  ctx.save();
+  ctx.translate(W/2, H/2);
+  ctx.scale(camera.zoom, camera.zoom);
+  ctx.translate(-camera.x, -camera.y);
+
+  // 地面基础色（草地）铺满视野
+  const viewPad = 400/camera.zoom;
+  ctx.fillStyle = '#4c8a4c';
+  ctx.fillRect(camera.x-W/2/camera.zoom-viewPad, camera.y-H/2/camera.zoom-viewPad, W/camera.zoom+viewPad*2, H/camera.zoom+viewPad*2);
+
+  // 沙漠底色
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(desert.x, desert.y, desert.r, 0, Math.PI*2);
+  ctx.fillStyle = '#dbc27a';
+  ctx.fill();
+  ctx.restore();
+
+  // 城市底色
+  ctx.fillStyle = '#6b6f63';
+  ctx.fillRect(cityMinX-80, cityMinY-80, (cityMaxX-cityMinX)+160, (cityMaxY-cityMinY)+160);
+
+  // 湖泊
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(lake.x, lake.y, lake.r, 0, Math.PI*2);
+  ctx.fillStyle = '#2e6f9e';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+  ctx.restore();
+
+  // 高速公路
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = roadWidth;
+  ctx.lineJoin = 'round'; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(highwayPts[0].x, highwayPts[0].y);
+  for(let i=1;i<=highwayPts.length;i++){
+    const p = highwayPts[i%highwayPts.length];
+    ctx.lineTo(p.x,p.y);
+  }
+  ctx.stroke();
+  // 车道虚线
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 4;
+  ctx.setLineDash([22,18]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 城市道路
+  ctx.strokeStyle = '#3a3a3a';
+  ctx.lineWidth = roadWidth*0.85;
+  for(const r of cityRoads){
+    ctx.beginPath(); ctx.moveTo(r.x1,r.y1); ctx.lineTo(r.x2,r.y2); ctx.stroke();
+  }
+
+  // 检查点圆环（可视化）
+  ctx.strokeStyle = 'rgba(255,220,60,0.55)';
+  ctx.lineWidth = 4;
+  for(const c of checkpoints){
+    ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,Math.PI*2); ctx.stroke();
+  }
+
+  // 建筑
+  for(const b of buildings){
+    ctx.fillStyle = b.color;
+    ctx.fillRect(b.x-b.w/2, b.y-b.h/2, b.w, b.h);
+    ctx.fillStyle = 'rgba(255,255,150,0.18)';
+    for(let wx=b.x-b.w/2+8; wx<b.x+b.w/2-8; wx+=16){
+      for(let wy=b.y-b.h/2+8; wy<b.y+b.h/2-8; wy+=16){
+        if(((wx+wy)|0)%37<18) ctx.fillRect(wx,wy,7,7);
+      }
+    }
+  }
+
+  // 树木
+  for(const t of trees){
+    ctx.fillStyle = '#6b4a2a';
+    ctx.fillRect(t.x-3, t.y-2, 6, t.s*0.4);
+    ctx.fillStyle = '#2e6b2e';
+    ctx.beginPath(); ctx.arc(t.x, t.y-t.s*0.3, t.s*0.55, 0, Math.PI*2); ctx.fill();
+  }
+  // 岩石
+  for(const r of rocks){
+    ctx.fillStyle = '#8a8a86';
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.s*0.5, 0, Math.PI*2); ctx.fill();
+  }
+  // 仙人掌
+  for(const c of cacti){
+    ctx.fillStyle = '#3e7d4a';
+    ctx.fillRect(c.x-4, c.y-c.s*0.6, 8, c.s);
+    ctx.fillRect(c.x-c.s*0.35, c.y-c.s*0.3, c.s*0.35, 7);
+  }
+
+  // 漂移尾迹
+  for(const s of skidMarks){
+    ctx.fillStyle = `rgba(20,20,20,${Math.max(0,s.alpha)})`;
+    ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, Math.PI*2); ctx.fill();
+  }
+  // 灰尘粒子
+  for(const p of dustParticles){
+    const a = Math.max(0, 1 - p.age/p.life);
+    ctx.fillStyle = `rgba(210,190,150,${a*0.5})`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 5*a+2, 0, Math.PI*2); ctx.fill();
+  }
+
+  // 金币
+  for(const coin of coins){
+    if(coin.taken) continue;
+    const s = Math.abs(Math.cos(coin.spin))*8+3;
+    ctx.fillStyle = '#ffd23f';
+    ctx.strokeStyle = '#a87d00';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(coin.x, coin.y-14, s, 10, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  }
+
+  // AI车辆
+  for(const c of aiCars) drawCar(c.x, c.y, c.angle, c.color, false);
+
+  // 玩家车辆
+  drawCar(car.x, car.y, car.angle, '#ff3b3b', true);
+
+  ctx.restore();
+
+  // 夜晚暗化叠加
+  if(isNight()){
+    ctx.fillStyle = 'rgba(5,10,30,0.42)';
+    ctx.fillRect(0,0,W,H);
+    // 车头灯光锥
+    const s = worldToScreen(car.x, car.y);
+    const grad = ctx.createRadialGradient(s.x,s.y,10, s.x + Math.cos(car.angle)*200, s.y + Math.sin(car.angle)*200, 260);
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.translate(s.x, s.y);
+    ctx.rotate(car.angle);
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.arc(0,0, 340, -0.5, 0.5);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  renderMinimap();
+  renderCompass();
+}
+
+function drawCar(x,y,angle,color,isPlayer){
+  // 注意：此函数在 render() 的世界坐标变换内被调用（尚未 ctx.restore()），
+  // 因此直接使用世界坐标 x,y，不需要再转换为屏幕坐标或再次缩放。
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  // 阴影
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath(); ctx.ellipse(0,4,22,12,0,0,Math.PI*2); ctx.fill();
+  // 车身
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(19,0);
+  ctx.lineTo(10,-9);
+  ctx.lineTo(-16,-9);
+  ctx.lineTo(-19,0);
+  ctx.lineTo(-16,9);
+  ctx.lineTo(10,9);
+  ctx.closePath();
+  ctx.fill();
+  // 车窗
+  ctx.fillStyle = 'rgba(20,30,40,0.85)';
+  ctx.fillRect(-8,-6,14,12);
+  if(isPlayer){
+    // 头灯
+    ctx.fillStyle = '#fff7c9';
+    ctx.beginPath(); ctx.arc(18,-5,2.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(18,5,2.5,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function renderCompass(){
+  // 指向最近未拾取的金币或下一个检查点方向的箭头
+  let target = null, best = Infinity;
+  for(const c of coins){ if(c.taken) continue; const d = Math.hypot(c.x-car.x,c.y-car.y); if(d<best){best=d; target=c;} }
+  if(!target){ target = checkpoints[0]; }
+  const ang = Math.atan2(target.y-car.y, target.x-car.x) - car.angle;
+  const el = document.getElementById('compassArrow');
+  el.style.transform = `rotate(${ang}rad)`;
+}
+
+function renderMinimap(){
+  const w = mmCanvas.width, h = mmCanvas.height;
+  mmCtx.clearRect(0,0,w,h);
+  mmCtx.fillStyle = 'rgba(30,60,30,0.4)';
+  mmCtx.fillRect(0,0,w,h);
+  const scale = w / WORLD_SIZE;
+  function tx(x){ return (x+HALF)*scale; }
+  function ty(y){ return (y+HALF)*scale; }
+
+  // 湖
+  mmCtx.fillStyle = '#2e6f9e';
+  mmCtx.beginPath(); mmCtx.arc(tx(lake.x), ty(lake.y), lake.r*scale, 0, Math.PI*2); mmCtx.fill();
+  // 沙漠
+  mmCtx.fillStyle = 'rgba(219,194,122,0.7)';
+  mmCtx.beginPath(); mmCtx.arc(tx(desert.x), ty(desert.y), desert.r*scale, 0, Math.PI*2); mmCtx.fill();
+  // 城市
+  mmCtx.fillStyle = 'rgba(120,120,110,0.7)';
+  mmCtx.fillRect(tx(cityMinX), ty(cityMinY), (cityMaxX-cityMinX)*scale, (cityMaxY-cityMinY)*scale);
+  // 高速公路
+  mmCtx.strokeStyle = '#eee'; mmCtx.lineWidth = 2;
+  mmCtx.beginPath();
+  mmCtx.moveTo(tx(highwayPts[0].x), ty(highwayPts[0].y));
+  for(let i=1;i<=highwayPts.length;i++){ const p = highwayPts[i%highwayPts.length]; mmCtx.lineTo(tx(p.x), ty(p.y)); }
+  mmCtx.stroke();
+  // 金币
+  mmCtx.fillStyle = '#ffd23f';
+  for(const c of coins){ if(!c.taken){ mmCtx.fillRect(tx(c.x)-1, ty(c.y)-1, 2, 2); } }
+  // AI车
+  mmCtx.fillStyle = '#66d0ff';
+  for(const c of aiCars){ mmCtx.beginPath(); mmCtx.arc(tx(c.x), ty(c.y), 3, 0, Math.PI*2); mmCtx.fill(); }
+  // 玩家
+  mmCtx.save();
+  mmCtx.translate(tx(car.x), ty(car.y));
+  mmCtx.rotate(car.angle);
+  mmCtx.fillStyle = '#ff3b3b';
+  mmCtx.beginPath();
+  mmCtx.moveTo(6,0); mmCtx.lineTo(-5,-4); mmCtx.lineTo(-5,4); mmCtx.closePath(); mmCtx.fill();
+  mmCtx.restore();
+  // 边框
+  mmCtx.strokeStyle = 'rgba(255,255,255,0.5)';
+  mmCtx.lineWidth = 2;
+  mmCtx.strokeRect(1,1,w-2,h-2);
+}
+
+/* ============================= 主循环 Main Loop ============================= */
+let lastTime = performance.now();
+function loop(now){
+  const dt = Math.min(0.05, (now-lastTime)/1000);
+  lastTime = now;
+  if(started){
+    update(dt);
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============================= 启动 ============================= */
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  started = true;
+  document.getElementById('startScreen').style.display = 'none';
+  initAudio();
+  showMessage('开始飘车吧！', 2);
+});
+
+// 暴露少量调试接口供自动化验证使用（不影响正常玩家）
+window.__game = { car, coins, aiCars, terrainAt, get started(){return started;}, start(){ if(!started){ started=true; document.getElementById('startScreen').style.display='none'; } } };
+
+})();
+</script>
+</body>
+</html>
