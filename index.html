@@ -7,7 +7,7 @@
 <meta name="description" content="Antigravity、Codex、Kiro、GitHub Copilot 在三个真实交付场景下的横向能力评测，产出可直接在页面内试用。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -17,6 +17,7 @@
     <a class="brand" href="index.html"><i class="brand-mark"></i>AI Coding Arena</a>
     <nav class="nav-links">
       <a href="index.html" class="active">总览</a>
+      <a href="#why-slow">Kiro 为什么慢</a>
       <a href="scenarios/racing-game.html">赛车游戏</a>
       <a href="scenarios/philips-chronicle.html">编年史页面</a>
       <a href="scenarios/dashboard.html">数据看板</a>
@@ -35,8 +36,8 @@
       可以直接点开试用——不看宣传，只看交付物。
     </p>
     <div class="hero-actions">
-      <a class="btn btn-accent" href="scenarios/racing-game.html">查看首个场景评测 →</a>
-      <a class="btn" href="#overall">直接看排名</a>
+      <a class="btn btn-accent" href="#overall">直接看排名</a>
+      <a class="btn" href="#why-slow">Kiro 为什么慢 →</a>
     </div>
     <dl class="hero-stats" id="hero-stats"></dl>
   </div>
@@ -57,9 +58,31 @@
   <section class="section">
     <div class="wrap">
       <div class="section-head">
+        <p class="section-label">Recap</p>
+        <h2>三场评测，各自发生了什么</h2>
+        <p>每个场景对模型的考验不同：游戏考验交互与状态管理，编年史考验信息架构与视觉表达，数据看板考验图表能力与数据处理。下面是逐场的核心结论。</p>
+      </div>
+      <div class="recap" id="recap"></div>
+    </div>
+  </section>
+
+  <section class="section" id="why-slow">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="section-label" id="dive-label"></p>
+        <h2 id="dive-title"></h2>
+        <p id="dive-lede"></p>
+      </div>
+      <div class="dive" id="dive"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
         <p class="section-label">Scenarios</p>
         <h2>三个测试场景</h2>
-        <p>每个场景对模型的考验不同：游戏考验交互与状态管理，编年史页面考验信息架构与视觉表达，数据看板考验图表能力与数据处理。</p>
+        <p>点进任意场景可以直接试用四个模型的原始产出，并查看该场景的评分明细与能力雷达图。</p>
       </div>
       <div class="scenario-grid" id="scenario-grid"></div>
     </div>
@@ -91,6 +114,17 @@
         <p>每个维度独立打分（0–10），由同一名评估者在相同环境下人工体验后给出，避免跨人标准漂移。</p>
       </div>
       <div class="criteria-grid" id="criteria-grid"></div>
+    </div>
+  </section>
+
+  <section class="section" id="one-more-thing">
+    <div class="wrap">
+      <div class="omt-head">
+        <p class="kicker" id="omt-kicker"></p>
+        <h2 id="omt-title"></h2>
+        <p id="omt-lede"></p>
+      </div>
+      <div id="omt-body"></div>
     </div>
   </section>
 

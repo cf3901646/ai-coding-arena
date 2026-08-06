@@ -7,10 +7,13 @@ document.addEventListener("DOMContentLoaded", () => {
   renderHeroStats();
   renderVerdict();
   renderPodium();
+  renderRecap();
+  renderDeepDive();
   renderScenarioCards();
   renderOverallTable();
   renderRadar();
   renderCriteria();
+  renderOneMoreThing();
   renderFooter();
 });
 
@@ -220,4 +223,139 @@ function renderCriteria() {
       <p>${c.desc || ""}</p>
     </div>`
   ).join("");
+}
+
+/* ---------- Recap: 逐场总结 ---------- */
+function renderRecap() {
+  const el = document.getElementById("recap");
+  if (!el || typeof RECAP === "undefined") return;
+
+  el.innerHTML = RECAP.map((r) => {
+    const rank = scenarioHasData(r.id) ? scenarioRanking(r.id) : [];
+    const win = rank[0];
+    const mini = rank
+      .map(
+        (row) =>
+          `<span>${row.ai.name}<b>${row.total}</b></span>`
+      )
+      .join("");
+
+    return `
+    <article class="recap-item">
+      <div class="recap-aside">
+        <div class="k">${r.label}</div>
+        <h3>${r.title}</h3>
+        ${
+          win
+            ? `<span class="winner"><i class="dot" style="background:${win.ai.color}"></i>领先 · ${win.ai.name}</span>`
+            : ""
+        }
+        <div class="rank-mini">${mini}</div>
+      </div>
+      <div class="recap-body">
+        ${r.paras.map((p) => `<p>${p}</p>`).join("")}
+        ${r.tag ? `<span class="tag">${r.tag}</span>` : ""}
+      </div>
+    </article>`;
+  }).join("");
+}
+
+/* ---------- Deep dive: Kiro 为什么慢 ---------- */
+function renderDeepDive() {
+  if (typeof DEEP_DIVE === "undefined") return;
+  const d = DEEP_DIVE;
+
+  const set = (id, v) => {
+    const n = document.getElementById(id);
+    if (n) n.innerHTML = v;
+  };
+  set("dive-label", d.label);
+  set("dive-title", d.title);
+  set("dive-lede", d.lede);
+
+  const el = document.getElementById("dive");
+  if (!el) return;
+
+  el.innerHTML = `
+    <div class="dive-main">
+      ${d.intro.map((p) => `<p>${p}</p>`).join("")}
+      <div class="dive-steps">
+        ${d.steps
+          .map(
+            (s) => `
+          <div class="dive-step">
+            <i>${s.n}</i>
+            <div><b>${s.title}</b><span>${s.desc}</span></div>
+          </div>`
+          )
+          .join("")}
+      </div>
+      ${d.outro.map((p) => `<p>${p}</p>`).join("")}
+    </div>
+    <div class="dive-side">
+      <div class="dive-card">
+        <div class="k">Kiro · 本次配置</div>
+        <dl style="margin:0">
+          ${d.specs
+            .map(
+              (s) =>
+                `<div class="spec-row"><dt>${s.k}</dt><dd class="${
+                  s.same ? "same" : ""
+                }">${s.v}</dd></div>`
+            )
+            .join("")}
+        </dl>
+      </div>
+      ${d.cards
+        .map(
+          (c) => `
+        <div class="dive-card">
+          <div class="k">${c.k}</div>
+          <h4>${c.title}</h4>
+          <p>${c.desc}</p>
+        </div>`
+        )
+        .join("")}
+    </div>`;
+}
+
+/* ---------- One more thing ---------- */
+function renderOneMoreThing() {
+  if (typeof ONE_MORE_THING === "undefined") return;
+  const o = ONE_MORE_THING;
+
+  const set = (id, v) => {
+    const n = document.getElementById(id);
+    if (n) n.innerHTML = v;
+  };
+  set("omt-kicker", o.kicker);
+  set("omt-title", o.title);
+  set("omt-lede", o.lede);
+
+  const el = document.getElementById("omt-body");
+  if (!el) return;
+
+  el.innerHTML = `
+    <dl class="omt-meta">
+      ${o.meta.map((m) => `<div><dt>${m.k}</dt><dd>${m.v}</dd></div>`).join("")}
+    </dl>
+
+    <div class="omt-stage">
+      <div class="omt-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="addr">${o.addr}</span>
+        <a class="btn btn-sm" href="${o.demoPath}" target="_blank" rel="noopener">全屏打开 ↗</a>
+      </div>
+      <iframe class="omt-frame" src="${o.demoPath}" loading="lazy"
+        title="Copilot Studio · Opus 5 Max — 飞利浦编年史"></iframe>
+      ${o.disclaimer ? `<div class="demo-disclaimer">${o.disclaimer}</div>` : ""}
+    </div>
+
+    <div class="omt-notes">
+      ${o.notes
+        .map((n) => `<div class="omt-note"><b>${n.title}</b><p>${n.desc}</p></div>`)
+        .join("")}
+    </div>
+
+    <div class="omt-closing">${o.closing}</div>`;
 }

@@ -37,6 +37,14 @@ function renderPageHead(scenario) {
       <h1>${scenario.title}</h1>
       <p class="lede">${scenario.desc}</p>
       ${
+        scenario.disclaimer
+          ? `<div class="disclaimer" role="note">
+               <span class="dc-mark">免责声明</span>
+               <p>${scenario.disclaimer}</p>
+             </div>`
+          : ""
+      }
+      ${
         scenario.prompt
           ? `<div class="prompt-box"><div class="k">下发给 4 个模型的同一条指令</div><p>“${scenario.prompt}”</p></div>`
           : ""
@@ -143,6 +151,11 @@ function renderDemos(scenario) {
             <div class="score-rows">${scoreRows}</div>
           </div>
         </div>
+        ${
+          scenario.demoNote
+            ? `<div class="demo-disclaimer">${scenario.demoNote}</div>`
+            : ""
+        }
       </article>`;
     })
     .join("");
