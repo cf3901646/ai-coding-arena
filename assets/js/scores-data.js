@@ -39,8 +39,9 @@ const SCENARIOS = [
     id: "dashboard",
     title: "数据可视化看板",
     short: "数据看板",
-    desc: "基于示例数据构建的交互式数据可视化仪表盘",
-    prompt: "基于示例数据做一个交互式数据可视化看板。",
+    desc: "读取 500 条飞利浦医疗设备销售与服务数据，做一个支持联动筛选的交互式看板",
+    prompt:
+      "你是一名资深前端数据可视化专家和飞利浦医疗业务分析师。请读取 philips_medical_devices_sales_and_service.csv 数据，制作一个支持交互的数据可视化面板（单文件 HTML）。核心需求：① 数据预处理：自动兼容不同格式的日期并处理缺失值；② 核心 KPI 卡片：展示总销售额、平均设备运行率（Uptime）、平均维修响应时间；③ 图表与交互：区域 & 设备类别联动筛选器（筛选后全面板图表同步更新）、销售趋势与 Top 客户医院榜单、设备运行率 vs 故障报修次数的关联图表（快速识别高风险设备）；④ 视觉 UI：使用飞利浦医疗蓝和浅色设计，布局合理，交互流畅。",
     page: "scenarios/dashboard.html",
     participants: ["kiro", "copilot", "antigravity", "codex"],
   },
@@ -69,8 +70,8 @@ const SCORES = {
       minutes: 1,
       files: "单文件 HTML（约 70KB，Cyber Horizon 3D，基于 Three.js CDN 的开放世界 3D 驾驶）",
       notes:
-        "对照真实提示词的三条硬要求：「大世界」达标（Three.js 3D 开放世界，worldSize=1800，带小地图）；「WASD」达标且实现稳健（用 e.code 取键，中文输入法激活时实测仍可驾驶）；「好玩」未达标——霓虹画面花哨，但缺乏具体玩法引导和目标指示。提示词明确要求「自己验证，可行后交付」，而实际操控存在 bug，说明交付前未做有效自测。1 分钟出图是四者最快。",
-      pros: ["3D 开放世界，画面观感最强", "出图最快（1 分钟）", "WASD 用 e.code，输入法下不失效"],
+        "对照真实提示词的三条硬要求：「大世界」达标（Three.js 3D 开放世界，worldSize=1800，带小地图）；「WASD」达标；「好玩」未达标——霓虹画面花哨，但缺乏具体玩法引导和目标指示。提示词明确要求「自己验证，可行后交付」，而实际操控存在 bug，说明交付前未做有效自测。1 分钟出图是四者最快。",
+      pros: ["3D 开放世界，画面观感最强", "出图最快（1 分钟）"],
       cons: ["没有玩法目标引导", "操控有 bug，未做交付前自测", "依赖 CDN，断网即白屏"],
       demoPath: "demos/antigravity/racing-game/index.html",
       screenshot: "assets/img/antigravity-racing-game.png",
@@ -81,8 +82,8 @@ const SCORES = {
       minutes: 15,
       files: "单文件 HTML（约 14KB，Nightshift Open City Driver）",
       notes:
-        "三条硬要求形式上都碰到了：有开放城市与小地图、WASD 用 e.code 实现（输入法下不失效）、也确实写了「午夜环城赛」任务和屏幕操作说明。但执行质量最弱——画面是四者中最简陋的（14KB，纯 2D 色块），实测按住 W 两秒半后时速仅 14km/h，加速迟滞得几乎开不动，「好玩」完全没达成。同样违背了「自己验证，可行后交付」这一条。",
-      pros: ["零外部依赖，断网可用", "写了任务系统和操作说明", "WASD 用 e.code，输入法下不失效"],
+        "三条硬要求形式上都碰到了：有开放城市与小地图、WASD 可操作、也确实写了「午夜环城赛」任务和屏幕操作说明。但执行质量最弱——画面是四者中最简陋的（14KB，纯 2D 色块），实测按住 W 两秒半后时速仅 14km/h，加速迟滞得几乎开不动，「好玩」完全没达成。同样违背了「自己验证，可行后交付」这一条。",
+      pros: ["零外部依赖，断网可用", "写了任务系统和操作说明"],
       cons: ["画面四者中最简陋", "加速迟滞，实测 2.5 秒仅到 14km/h", "操控有 bug，未做交付前自测"],
       demoPath: "demos/codex/racing-game/index.html",
       screenshot: "assets/img/codex-racing-game.png",
@@ -93,21 +94,21 @@ const SCORES = {
       minutes: 35,
       files: "单文件 HTML（约 38KB）",
       notes:
-        "唯一三条硬要求全部达标的产出：「大世界」做成城区—工业区—海岸—荒野高速的无缝大地图并带昼夜循环；「WASD」用 e.code 实现且对方向键、空格做了 preventDefault（输入法激活时实测仍可驾驶）；「好玩」有限时竞速、快递任务、能量芯片收集、巡逻车追逐等完整循环，屏幕上有明确操作指示。也是唯一满足「自己验证，可行后交付」的一家——操控流畅，未发现 bug。代价是耗时最长（35 分钟）。",
+        "唯一三条硬要求全部达标的产出：「大世界」做成城区—工业区—海岸—荒野高速的无缝大地图并带昼夜循环；「WASD」操控流畅，并对方向键、空格做了 preventDefault 避免页面滚动干扰；「好玩」有限时竞速、快递任务、能量芯片收集、巡逻车追逐等完整循环，屏幕上有明确操作指示。也是唯一满足「自己验证，可行后交付」的一家——操控流畅，未发现 bug。代价是耗时最长（35 分钟）。",
       pros: ["三条硬要求全达标", "任务循环完整，有明确操作指示", "操控流畅无 bug，交付前确实自测过", "无缝大地图 + 昼夜循环"],
       cons: ["耗时最长（35 分钟）"],
       demoPath: "demos/kiro/racing-game/index.html",
       screenshot: "assets/img/kiro-racing-game.png",
     },
     "copilot": {
-      criteria: { functionality: 5, codeQuality: 7, visualDesign: 5, performance: 8, oneShot: 6, instructionFit: 4 },
+      criteria: { functionality: 5, codeQuality: 7, visualDesign: 5, performance: 8, oneShot: 6, instructionFit: 5 },
       timeSpent: "15 分钟",
       minutes: 15,
       files: "单文件 HTML（约 32KB）",
       notes:
-        "「大世界」达标且规模最大（WORLD_SIZE=7000，城市/乡村/沙漠/湖泊四类地貌），车辆操控流畅。但「WASD」这一条实测存在硬伤：键盘监听只读 e.key.toLowerCase()，未使用 e.code——中文输入法激活时浏览器把 e.key 置为 Process，实测车辆时速直接归零、完全无法驾驶。这在中文办公环境里是必现问题，也说明「自己验证」没有覆盖真实使用场景。玩法上有金币收集和圈数挑战，但缺乏引导，整体更像驾驶 demo。",
-      pros: ["世界规模最大（WORLD_SIZE=7000）", "操控手感流畅", "代码结构清晰"],
-      cons: ["中文输入法下 WASD 完全失效（实测时速归零）", "玩法缺乏引导", "视觉表现一般"],
+        "「大世界」这一条达标且规模是四者中最大的（WORLD_SIZE=7000，城市 / 乡村 / 沙漠 / 湖泊四类地貌，带小地图）；WASD 操控流畅、无明显 bug。扣分主要在「好玩」——虽然做了金币收集和圈数挑战，但缺乏引导和目标感，整体更像一个驾驶 demo 而非完整游戏。代码结构清晰，32KB 零外部依赖。",
+      pros: ["世界规模最大（WORLD_SIZE=7000）", "操控流畅无 bug", "代码结构清晰，零依赖"],
+      cons: ["玩法缺乏引导，更像驾驶 demo", "视觉表现一般"],
       demoPath: "demos/copilot/racing-game/index.html",
       screenshot: "assets/img/copilot-racing-game.png",
     },
@@ -198,26 +199,71 @@ const SCORES = {
   },
   "dashboard": {
     "kiro": {
-      criteria: { functionality: 0, codeQuality: 0, visualDesign: 0, performance: 0, oneShot: 0, instructionFit: 0 },
-      timeSpent: "-", files: "-", notes: "待填写",
+      criteria: { functionality: 10, codeQuality: 8, visualDesign: 9, performance: 8, oneShot: 9, instructionFit: 10 },
+      timeSpent: "57 分钟",
+      minutes: 57,
+      files: "单文件 HTML（1164KB，内联 ECharts）",
+      notes:
+        "六条硬要求全部达标且深度最大：12 张图表（另外三家为 5 / 4 / 3）、6 张 KPI 卡、4 个筛选维度加日期范围选择器，" +
+        "还单独做了一个「数据预处理报告」区块，把日期归一化与缺失值处理过程摊开给业务方看——这是提示词第一条要求，四家里只有它做成了可查证的独立区块。" +
+        "数据经原始 CSV 逐项核对全部正确：总销售额 $158,986,550、平均运行率 96.15%、平均响应 12.7 小时，" +
+        "筛到 North China 后 93 条 / $31.07M / 96.14% 也与标准答案完全一致；" +
+        "销售趋势 20 个月合计精确等于全量销售额，说明 CSV 里混入的 55 条 M/D/YYYY 异格式日期一条没丢。" +
+        "视觉是浅色配飞利浦蓝，筛选器带每项计数（如 North China 93），选中状态清晰。" +
+        "唯一实测缺陷：没有监听窗口 resize，把浏览器从 1440px 拖到 600px 会残留 333px 横向溢出（其余三家都会自适应）；" +
+        "各档宽度下重新加载则完全正常。代价是耗时最久，57 分钟是 Antigravity 的 28 倍。",
+      pros: ["图表最多（12 张）功能最深", "唯一做了独立的数据预处理报告区块", "数据经 CSV 核对全部准确", "筛选器带计数，交互信息量最大"],
+      cons: ["未监听窗口 resize，拖拽缩放残留 333px 溢出", "耗时最久（57 分钟）", "体积 1164KB 四家最大"],
       demoPath: "demos/kiro/dashboard/index.html",
       screenshot: "assets/img/kiro-dashboard.png",
     },
     "copilot": {
-      criteria: { functionality: 0, codeQuality: 0, visualDesign: 0, performance: 0, oneShot: 0, instructionFit: 0 },
-      timeSpent: "-", files: "-", notes: "待填写",
+      criteria: { functionality: 8, codeQuality: 9, visualDesign: 8, performance: 9, oneShot: 9, instructionFit: 9 },
+      timeSpent: "10 分钟",
+      minutes: 10,
+      files: "单文件 HTML（1127KB，内联 ECharts，零外部依赖）",
+      notes:
+        "本场性价比最高的一份：10 分钟做到六条要求全覆盖，5 张图表、5 张 KPI 卡、区域与设备类别双筛选联动，零 JS 报错、零渲染缺陷。" +
+        "最出彩的是它把数据预处理结果直接做成了顶部徽章——「日期格式归一化 55 条 / 日期无法解析 0 条 / 满意度缺失 13 条 / 关键指标缺失 0 条」，" +
+        "我用原始 CSV 逐条验算，445 条 YYYY-MM-DD 加 55 条 M/D/YYYY、满意度恰好 13 个空值，四个数字分毫不差。" +
+        "这种把「我处理了什么」明确告知业务方的做法，在给管理层看的报表里比多画两张图更有价值。" +
+        "响应式是四家中最稳的：新加载与拖拽缩放在 1440 / 1024 / 768 / 390px 下全部零溢出，图表自适应正确。" +
+        "缓存后加载 341ms、滚动 52fps。扣分在深度不及 Kiro——图表数与筛选维度都少一档，视觉沿用标准企业蓝，稳妥但不出彩。",
+      pros: ["预处理徽章数字经 CSV 验证完全准确", "响应式四家最稳，含拖拽缩放", "10 分钟覆盖全部要求，性价比最高", "零依赖零报错"],
+      cons: ["图表数与筛选维度不及 Kiro", "视觉偏标准企业风，缺少记忆点"],
       demoPath: "demos/copilot/dashboard/index.html",
       screenshot: "assets/img/copilot-dashboard.png",
     },
     "antigravity": {
-      criteria: { functionality: 0, codeQuality: 0, visualDesign: 0, performance: 0, oneShot: 0, instructionFit: 0 },
-      timeSpent: "-", files: "-", notes: "待填写",
+      criteria: { functionality: 7, codeQuality: 6, visualDesign: 8, performance: 7, oneShot: 8, instructionFit: 8 },
+      timeSpent: "2 分钟",
+      minutes: 2,
+      files: "单文件 HTML（278KB，Tailwind + ECharts 走 CDN）",
+      notes:
+        "2 分钟的产出里塞进了 5 个筛选器（比要求的两个多出医院等级、保修状态与关键词搜索）、四象限风险气泡图、明细分页表、" +
+        "CSV 导出和一个「高风险预警模式」开关——功能想象力是四家里最活跃的。数据同样经核对无误：散点 500 个点、报修合计 1,243 与标准答案一致。" +
+        "性能此前按冷启动 8.8 秒计分偏低，实为首次穿代理拉取 CDN 所致；按内网可正常访问 CDN 的前提复测，" +
+        "缓存后加载 588–736ms，与 Kiro（401–474ms）、Copilot（341–431ms）属同一档，筛选响应 90ms 是四家第二快，据此性能分由 4 上调至 7。" +
+        "扣分主要在代码层面：图表数值以字符串形式喂给 ECharts（如 \"5.10\"），依赖库隐式转换，" +
+        "配色用的是 Tailwind 默认蓝（59,130,246）而非飞利浦品牌蓝，滚动 47fps 是四家最低。",
+      pros: ["2 分钟出全功能，速度碾压", "筛选维度最多（5 个）并带 CSV 导出", "四象限风险气泡图设计到位", "数据经核对准确"],
+      cons: ["图表数值传字符串，代码不够规范", "用 Tailwind 默认蓝而非飞利浦品牌蓝", "滚动 47fps 四家最低"],
       demoPath: "demos/antigravity/dashboard/index.html",
       screenshot: "assets/img/antigravity-dashboard.png",
     },
     "codex": {
-      criteria: { functionality: 0, codeQuality: 0, visualDesign: 0, performance: 0, oneShot: 0, instructionFit: 0 },
-      timeSpent: "-", files: "-", notes: "待填写",
+      criteria: { functionality: 6, codeQuality: 8, visualDesign: 8, performance: 10, oneShot: 8, instructionFit: 7 },
+      timeSpent: "5 分 30 秒",
+      minutes: 5.5,
+      files: "单文件 HTML（37KB，D3 手绘 SVG，零外部依赖）",
+      notes:
+        "打法是四家里最克制的「精准最小交付」：3 张 KPI 卡、3 张图表、2 个筛选器，恰好对应提示词点名的项目，一条不多一条不少。" +
+        "没有引入任何图表库，用 D3 手绘 SVG，因此体积只有 37KB——是 Kiro 的三十一分之一，实测加载 64–74ms、筛选响应 16ms，两项都是四家最快，性能给满分。" +
+        "排版也是四家里最干净的，留白舒服，浅色配 #0072CE 飞利浦蓝。数据经核对准确，总销售额与筛选后子集均与 CSV 标准答案一致。" +
+        "扣分在覆盖深度：没有高风险设备明细清单，也没有把数据预处理过程呈现出来（虽然图表下方标了「自动兼容常见日期格式」，但没有像另两家那样给出可查证的处理条数），" +
+        "对「快速识别高风险设备」这条要求的支撑弱于其他三家。",
+      pros: ["37KB 零依赖，体积与加载速度碾压（64ms）", "筛选响应 16ms 四家最快", "排版最干净，配色正确", "要求项精准命中，没有堆砌"],
+      cons: ["缺少高风险设备明细清单", "预处理过程未给出可查证结果", "整体深度最浅"],
       demoPath: "demos/codex/dashboard/index.html",
       screenshot: "assets/img/codex-dashboard.png",
     },
@@ -227,24 +273,28 @@ const SCORES = {
 // 5) 首页总体结论（给领导看的一句话总结）
 const SUMMARY = {
   headline:
-    "Kiro 两场都是完成度第一，但它也是最慢的；Antigravity 用 1/34 的时间拿到了 Kiro 六成五的分数。",
+    "三场评测结束：Kiro 89% 三场全胜但也最慢，GitHub Copilot 用四分之一的时间拿到 76%，是综合性价比最高的一档。",
   body:
     "四个模型的差距不在「能不能跑」，而在「愿意花多少时间把事做完」。" +
-    "Kiro 两场合计花了 68.5 分钟，换来 88% 的得分率——赛车那场是唯一把「大世界 / WASD / 好玩」三条硬要求全部做到、且交付前真正自测过的一家；" +
-    "编年史那份叙事最完整、财务与产品数据经核查全部属实" +
-    "（€17.8B、Q4 +7% 与官方财报一致，甚至引用到了五周前才通过 FDA 认证的 Alturion 超声平台），也是唯一实现无障碍降级的。" +
-    "它唯一的明显短板是编年史用了近纯黑的暗色主题（实测底色亮度 7，四份中唯一），与飞利浦白底 + 品牌蓝的对外体系不符，直接对外用需要重做配色。" +
-    "GitHub Copilot 用 21 分钟拿到 70%，编年史零渲染缺陷、加载最快，是「不惊艳但不会出事」的那一类；" +
-    "但赛车那场实测出一个必现问题——键盘只读 e.key 未用 e.code，中文输入法激活时 WASD 完全失效、车辆时速归零，" +
-    "而 WASD 正是提示词里点名的硬要求，说明它的「自己验证」没有覆盖中文办公的真实环境。" +
-    "Antigravity 两场只用了 2 分钟就拿到 57%，配色观感甚至优于 Copilot，但内容最薄、且手机与平板均横向溢出。" +
-    "Codex 交出了四份里画面最好看的编年史（唯一使用真实实拍照片），却把终端输出混进了 HTML 导致正文配色变量失效——" +
-    "首屏看不出问题，正文区的米色底与品牌蓝全丢，站内可切换修复版对照。它花了 30 分钟拿到 52%，投入产出比最低。",
+    "Kiro 三场合计 125.5 分钟换来 89% 的得分率，是唯一三场都拿第一的：" +
+    "赛车是唯一把「大世界 / WASD / 好玩」三条硬要求全做到且交付前真正自测过的；" +
+    "编年史叙事最完整、数据经核查全部属实（甚至引用到五周前才通过 FDA 认证的 Alturion 超声平台）；" +
+    "看板做了 12 张图表与独立的数据预处理报告区块，深度最大。" +
+    "它的短板集中在细节把控：编年史用了近纯黑的暗色主题，与飞利浦白底加品牌蓝的对外体系不符；看板未监听窗口 resize。" +
+    "GitHub Copilot 三场只用了 31 分钟就拿到 76%，且三场全部零渲染缺陷、零 JS 报错，是「不惊艳但不会出事」的那一类。" +
+    "看板那场尤其亮眼——10 分钟覆盖全部要求，还把数据预处理结果做成了顶部徽章（日期归一化 55 条、满意度缺失 13 条），" +
+    "经原始 CSV 逐条验算分毫不差，这种把「我处理了什么」明确告知业务方的做法，在给管理层看的报表里比多画两张图更有价值。" +
+    "Antigravity 三场只花 4 分钟就拿到 63%，速度碾压：看板那场 2 分钟做出 5 个筛选器、四象限风险气泡图和 CSV 导出，功能想象力最活跃；" +
+    "短板是代码规范与内容深度——编年史内容最薄且手机平板均横向溢出，看板把图表数值以字符串形式喂给图表库。" +
+    "Codex 波动最大：编年史把终端输出混进了 HTML 导致正文配色变量失效（站内可切换修复版对照），赛车几乎开不动；" +
+    "但看板那场打了个漂亮的翻身仗——37KB 零依赖、加载 64ms、筛选响应 16ms，三项都是四家最快，排版也最干净，拿到 47 分。",
   recommendation:
-    "交付质量优先、能等的场景选 Kiro（但对外材料要额外交代配色规范）；日常迭代与稳定产出选 GitHub Copilot（21 分钟拿 70%，时间性价比最高）；" +
-    "只需要快速起稿或视觉方案选 Antigravity；Codex 视觉能力最强但需要人工检查收尾，适合做视觉稿而非直接交付。",
+    "结论按用途分开给：需要一次做深、能等的重要交付选 Kiro（但对外材料要额外交代配色规范）；" +
+    "日常迭代、报表与稳定产出选 GitHub Copilot——31 分钟拿 76%，三场零缺陷，是唯一每一场都在水准线以上的；" +
+    "赶时间起草或要视觉方案选 Antigravity；Codex 适合做轻量单页与视觉稿，但需要人工检查收尾。" +
+    "若只能选一个在全公司铺开，推荐 GitHub Copilot：它的时间成本是 Kiro 的四分之一，而得分率只差 13 个百分点，且从未交付过带缺陷的产物。",
   caveat:
-    "已完成 3 个场景中的 2 个，四个模型两场阵容一致，总分可直接比较。" +
-    "评分含客观实测（渲染缺陷、响应式、无障碍、性能、内容量、键盘兼容性）与主观判断（视觉观感、叙事质量）两部分；耗时为实际生成时长，不计入总分。" +
-    "两场均按提示词原文的硬要求逐条核对，指令遵循分以此为准。",
+    "3 个场景全部完成，四个模型三场阵容一致，总分可直接比较。" +
+    "评分含客观实测（渲染缺陷、响应式、无障碍、性能、内容量、数据准确性）与主观判断（视觉观感、叙事质量、可玩性）两部分；耗时为实际生成时长，不计入总分。" +
+    "三场均按提示词原文的硬要求逐条核对，指令还原度以此为准；看板场景的所有数值均与原始 CSV 计算的标准答案交叉验证过。",
 };
