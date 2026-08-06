@@ -173,7 +173,7 @@ function renderOverallTable() {
       <td class="total">${r.total}<span style="opacity:.4"> / ${r.max}</span><br><span style="opacity:.5;font-size:11px;font-weight:600">${r.pct.toFixed(
         0
       )}%</span></td>
-      <td>${minsOf(r.ai.id) ? minsOf(r.ai.id) + "<span style=\"opacity:.4\"> 分</span>" : "—"}</td>
+      <td>${minsOf(r.ai.id) ? minsOf(r.ai.id) + "<span style=\"opacity:.4\"> 分钟</span>" : "—"}</td>
     </tr>`
     )
     .join("");
@@ -185,7 +185,7 @@ function renderOverallTable() {
         <tbody>${body}</tbody>
       </table>
     </div>
-    <div class="table-note">单场景满分 ${perMax} 分（${CRITERIA.length} 项维度 × 10）。四个模型在两个场景中阵容一致，总分可直接比较。耗时为两场累计的实际生成时长，不计入总分，供评估投入产出比参考。</div>`;
+    <div class="table-note">单场景满分 ${perMax} 分（${CRITERIA.length} 项维度 × 10）。四个模型在三个场景中阵容一致，总分可直接比较。耗时为三场累计的实际生成时长，不计入总分，供评估投入产出比参考。</div>`;
 }
 
 /* ---------- Radar ---------- */

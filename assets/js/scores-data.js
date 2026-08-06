@@ -5,7 +5,7 @@
  * ============================================================
  */
 
-// 1) 参评的 4 个 AI（两个场景阵容一致）
+// 1) 参评的 4 个 AI（三个场景阵容一致）
 const AIS = [
   { id: "kiro", name: "Kiro", vendor: "AWS", color: "#f54e00" },
   { id: "copilot", name: "GitHub Copilot", vendor: "GitHub", color: "#0f7b5a" },

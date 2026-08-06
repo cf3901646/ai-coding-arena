@@ -153,21 +153,18 @@ img {
 }
 
 .brand-mark {
-  width: 17px;
-  height: 17px;
-  border-radius: var(--r-xs);
-  background: var(--fg);
-  position: relative;
+  width: 18px;
+  height: 18px;
   flex: none;
+  display: block;
+  color: var(--fg);
+  overflow: visible;
 }
 
-.brand-mark::after {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border-radius: 1px;
-  background: var(--accent);
-}
+.brand-mark .b1 { fill: currentColor; opacity: 0.26; }
+.brand-mark .b2 { fill: currentColor; opacity: 0.42; }
+.brand-mark .b3 { fill: currentColor; opacity: 0.6; }
+.brand-mark .b4 { fill: var(--accent); }
 
 .nav-links {
   display: flex;
