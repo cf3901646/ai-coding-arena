@@ -184,7 +184,8 @@ function renderScenarioRadar(scenario) {
   if (!cv || typeof Chart === "undefined") return;
 
   const datasets = makeRadarDatasets(
-    (aiId, key) => SCORES[scenario.id][aiId].criteria[key] || 0
+    (aiId, key) => (((SCORES[scenario.id] || {})[aiId] || {}).criteria || {})[key] || 0,
+    scenarioAIs(scenario.id)
   );
   new Chart(cv, buildRadarConfig(datasets));
 }

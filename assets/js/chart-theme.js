@@ -28,16 +28,30 @@ function hexToRgba(hex, alpha) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
+/** 某场景的参赛阵容（未声明 participants 时回退为全体） */
+function scenarioAIs(scenarioId) {
+  const s = SCENARIOS.find((x) => x.id === scenarioId);
+  if (!s || !Array.isArray(s.participants)) return AIS;
+  return s.participants
+    .map((id) => AIS.find((a) => a.id === id))
+    .filter(Boolean);
+}
+
+/** 某 AI 是否参加了某场景 */
+function isParticipant(scenarioId, aiId) {
+  return scenarioAIs(scenarioId).some((a) => a.id === aiId);
+}
+
 /** 求某个 AI 在某个场景下的总分 / 均分 */
 function scenarioTotal(scenarioId, aiId) {
   const rec = SCORES[scenarioId] && SCORES[scenarioId][aiId];
-  if (!rec) return 0;
+  if (!rec || !rec.criteria) return 0;
   return CRITERIA.reduce((sum, c) => sum + (rec.criteria[c.key] || 0), 0);
 }
 
 /** 场景是否已有评测数据 */
 function scenarioHasData(scenarioId) {
-  return AIS.some((ai) => scenarioTotal(scenarioId, ai.id) > 0);
+  return scenarioAIs(scenarioId).some((ai) => scenarioTotal(scenarioId, ai.id) > 0);
 }
 
 /** 已完成评测的场景列表 */
@@ -45,31 +59,45 @@ function ratedScenarios() {
   return SCENARIOS.filter((s) => scenarioHasData(s.id));
 }
 
-/** 跨场景综合分：只统计已有数据的场景，返回按总分降序的排名数组 */
+/**
+ * 跨场景综合排名。
+ * 各场景阵容不同，直接比总分对参赛少的模型不公平，
+ * 因此以「参赛场次的平均得分率」排序，并保留参赛场次数供 UI 标注。
+ */
 function overallRanking() {
   const rated = ratedScenarios();
+  const perMax = CRITERIA.length * 10;
+
   return AIS.map((ai) => {
-    const perScenario = rated.map((s) => scenarioTotal(s.id, ai.id));
-    const total = perScenario.reduce((a, b) => a + b, 0);
-    const max = rated.length * CRITERIA.length * 10;
+    const perScenario = rated.map((s) =>
+      isParticipant(s.id, ai.id) ? scenarioTotal(s.id, ai.id) : null
+    );
+    const joined = perScenario.filter((v) => v !== null);
+    const total = joined.reduce((a, b) => a + b, 0);
+    const max = joined.length * perMax;
     return {
       ai,
       perScenario,
+      joined: joined.length,
       total,
       max,
-      avg: rated.length ? total / rated.length : 0,
+      avg: joined.length ? total / joined.length : 0,
       pct: max ? (total / max) * 100 : 0,
     };
-  }).sort((a, b) => b.total - a.total);
+  })
+    .filter((r) => r.joined > 0)
+    .sort((a, b) => b.pct - a.pct || b.joined - a.joined);
 }
 
-/** 单场景排名 */
+/** 单场景排名（只含该场景参赛模型） */
 function scenarioRanking(scenarioId) {
-  return AIS.map((ai) => ({
-    ai,
-    rec: SCORES[scenarioId][ai.id],
-    total: scenarioTotal(scenarioId, ai.id),
-  })).sort((a, b) => b.total - a.total);
+  return scenarioAIs(scenarioId)
+    .map((ai) => ({
+      ai,
+      rec: (SCORES[scenarioId] || {})[ai.id],
+      total: scenarioTotal(scenarioId, ai.id),
+    }))
+    .sort((a, b) => b.total - a.total);
 }
 
 /* ---------- Chart.js ---------- */
@@ -80,8 +108,8 @@ function applyChartDefaults() {
   Chart.defaults.color = T.textSec;
 }
 
-function makeRadarDatasets(getScore) {
-  return AIS.map((ai) => ({
+function makeRadarDatasets(getScore, ais) {
+  return (ais || AIS).map((ai) => ({
     label: ai.name,
     data: CRITERIA.map((c) => getScore(ai.id, c.key)),
     borderColor: ai.color,

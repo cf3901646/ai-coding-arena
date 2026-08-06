@@ -2,17 +2,604 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<title>GitHub Copilot - 飞利浦编年史HTML页面</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>飞利浦 · 编年史 | 从一盏灯到一生的健康关怀</title>
 <style>
-  body { font-family: sans-serif; background:#0f1420; color:#9aa5bd; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; text-align:center; }
-  .box { padding: 24px; }
-  h2 { color:#e8ecf5; }
+  :root{
+    --blue-900:#04102b;
+    --blue-700:#0b2d6b;
+    --blue-600:#0d5bd4;
+    --blue-500:#1e88ff;
+    --cyan:#41d8f0;
+    --ink:#0a1428;
+    --paper:#f6f8fc;
+    --muted:#6b7a95;
+    --line:rgba(120,150,200,.22);
+    --maxw:1180px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--blue-500);color:#fff;}
+
+  /* ---------- 进度条 ---------- */
+  #progress{
+    position:fixed;top:0;left:0;height:3px;width:0%;
+    background:linear-gradient(90deg,var(--blue-600),var(--cyan));
+    z-index:999;transition:width .12s linear;
+  }
+
+  /* ---------- 导航 ---------- */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:900;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px clamp(18px,5vw,54px);
+    backdrop-filter:blur(14px);
+    background:rgba(4,16,43,.28);
+    transition:background .4s ease,padding .4s ease,box-shadow .4s ease;
+  }
+  nav.solid{background:rgba(255,255,255,.88);box-shadow:0 6px 30px rgba(10,30,80,.09);padding:10px clamp(18px,5vw,54px);}
+  nav .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.14em;color:#fff;transition:color .4s;}
+  nav.solid .brand{color:var(--blue-700);}
+  nav .brand .shield{width:30px;height:30px;flex:none;}
+  nav ul{display:flex;gap:clamp(12px,2vw,30px);list-style:none;margin:0;padding:0;font-size:14px;}
+  nav ul a{color:rgba(255,255,255,.82);transition:color .3s;position:relative;padding-bottom:3px;}
+  nav.solid ul a{color:var(--muted);}
+  nav ul a::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--blue-500);transition:width .3s;}
+  nav ul a:hover::after{width:100%;}
+  nav ul a:hover{color:var(--blue-500);}
+  @media(max-width:760px){nav ul{display:none;}}
+
+  /* ---------- 首屏 ---------- */
+  header.hero{
+    position:relative;min-height:100vh;display:flex;align-items:center;
+    background:radial-gradient(1200px 700px at 12% -10%,#12439c 0%,transparent 60%),
+               radial-gradient(900px 600px at 88% 20%,#0a2f7a 0%,transparent 62%),
+               linear-gradient(160deg,var(--blue-900),#061738 55%,#02224f);
+    overflow:hidden;color:#fff;
+  }
+  .wave{position:absolute;inset:0;opacity:.30;}
+  .glow{
+    position:absolute;border-radius:50%;filter:blur(90px);opacity:.42;
+    animation:float 16s ease-in-out infinite;
+  }
+  .glow.a{width:520px;height:520px;background:#1e6bff;top:-120px;left:-80px;}
+  .glow.b{width:440px;height:440px;background:#20c9e8;bottom:-140px;right:-60px;animation-delay:-6s;}
+  @keyframes float{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(40px,-30px) scale(1.12);}}
+
+  .hero-inner{position:relative;z-index:3;max-width:var(--maxw);margin:0 auto;padding:120px clamp(20px,5vw,40px) 90px;width:100%;}
+  .kicker{
+    display:inline-flex;align-items:center;gap:10px;font-size:12.5px;letter-spacing:.32em;
+    text-transform:uppercase;color:var(--cyan);border:1px solid rgba(65,216,240,.4);
+    padding:7px 16px;border-radius:999px;margin-bottom:26px;background:rgba(65,216,240,.07);
+  }
+  .hero h1{
+    font-size:clamp(38px,6.6vw,80px);line-height:1.08;margin:0 0 22px;font-weight:800;letter-spacing:-.02em;
+    background:linear-gradient(100deg,#ffffff 20%,#9fd0ff 65%,#41d8f0 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hero p.lead{max-width:660px;font-size:clamp(15px,1.5vw,19px);color:rgba(226,238,255,.8);margin:0 0 40px;}
+  .hero-stats{display:flex;flex-wrap:wrap;gap:clamp(24px,5vw,64px);margin-top:16px;}
+  .hero-stats div span{display:block;font-size:clamp(28px,3.6vw,44px);font-weight:800;color:#fff;line-height:1.1;}
+  .hero-stats div small{color:rgba(190,212,245,.7);font-size:13px;letter-spacing:.06em;}
+  .scroll-cue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);z-index:4;color:rgba(255,255,255,.6);font-size:12px;letter-spacing:.28em;text-align:center;}
+  .scroll-cue i{display:block;width:1px;height:46px;margin:12px auto 0;background:linear-gradient(rgba(255,255,255,.65),transparent);animation:cue 2.2s infinite;}
+  @keyframes cue{0%{opacity:0;transform:scaleY(.2);}40%{opacity:1;}100%{opacity:0;transform:scaleY(1);}}
+
+  /* ---------- 通用区块 ---------- */
+  section{padding:clamp(72px,9vw,130px) clamp(20px,5vw,40px);}
+  .wrap{max-width:var(--maxw);margin:0 auto;}
+  .eyebrow{font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--blue-600);font-weight:700;margin-bottom:14px;}
+  h2.title{font-size:clamp(28px,3.8vw,46px);line-height:1.2;margin:0 0 18px;font-weight:800;letter-spacing:-.01em;}
+  .sub{color:var(--muted);max-width:720px;font-size:16px;margin:0 0 54px;}
+
+  .reveal{opacity:0;transform:translateY(34px);transition:opacity .8s cubic-bezier(.2,.7,.3,1),transform .8s cubic-bezier(.2,.7,.3,1);}
+  .reveal.in{opacity:1;transform:none;}
+
+  /* ---------- 时间轴 ---------- */
+  #history{background:#fff;}
+  .timeline{position:relative;margin-top:20px;}
+  .timeline::before{
+    content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);
+    background:linear-gradient(var(--blue-600),var(--cyan),rgba(13,91,212,.08));
+  }
+  .tl-item{position:relative;width:50%;padding:0 46px 54px 0;}
+  .tl-item:nth-child(even){margin-left:50%;padding:0 0 54px 46px;}
+  .tl-item .dot{
+    position:absolute;top:8px;right:-9px;width:18px;height:18px;border-radius:50%;
+    background:#fff;border:3px solid var(--blue-600);box-shadow:0 0 0 6px rgba(13,91,212,.10);
+  }
+  .tl-item:nth-child(even) .dot{right:auto;left:-9px;}
+  .tl-card{
+    background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:22px 24px;
+    transition:transform .45s cubic-bezier(.2,.7,.3,1),box-shadow .45s,border-color .45s;
+  }
+  .tl-card:hover{transform:translateY(-6px);box-shadow:0 22px 48px rgba(12,40,100,.13);border-color:rgba(13,91,212,.4);}
+  .tl-year{font-size:26px;font-weight:800;color:var(--blue-600);letter-spacing:-.01em;}
+  .tl-card h3{margin:4px 0 8px;font-size:18px;}
+  .tl-card p{margin:0;color:var(--muted);font-size:14.5px;}
+  .tag{display:inline-block;margin-top:12px;font-size:11.5px;letter-spacing:.1em;color:var(--blue-700);background:rgba(13,91,212,.09);padding:4px 10px;border-radius:999px;}
+  @media(max-width:820px){
+    .timeline::before{left:10px;}
+    .tl-item,.tl-item:nth-child(even){width:100%;margin-left:0;padding:0 0 40px 40px;}
+    .tl-item .dot,.tl-item:nth-child(even) .dot{left:2px;right:auto;}
+  }
+
+  /* ---------- 转型 ---------- */
+  #transform{
+    background:linear-gradient(165deg,var(--blue-900),#07234f 60%,#0a2e6d);color:#fff;position:relative;overflow:hidden;
+  }
+  #transform .eyebrow{color:var(--cyan);}
+  #transform .sub{color:rgba(206,225,252,.72);}
+  .shift{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:54px;}
+  .shift-card{
+    background:rgba(255,255,255,.055);border:1px solid rgba(140,190,255,.18);border-radius:18px;padding:26px;
+    backdrop-filter:blur(6px);transition:transform .45s,background .45s,border-color .45s;
+  }
+  .shift-card:hover{transform:translateY(-8px);background:rgba(255,255,255,.1);border-color:var(--cyan);}
+  .shift-card .num{font-size:13px;letter-spacing:.3em;color:var(--cyan);}
+  .shift-card h3{margin:10px 0 10px;font-size:20px;}
+  .shift-card p{margin:0;color:rgba(206,225,252,.72);font-size:14.5px;}
+  .from-to{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px;font-size:13px;}
+  .from-to em{font-style:normal;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.08);color:rgba(214,231,255,.8);}
+  .from-to .arrow{color:var(--cyan);font-weight:700;}
+  .from-to strong{padding:5px 12px;border-radius:999px;background:linear-gradient(90deg,var(--blue-600),var(--cyan));color:#04102b;font-weight:700;}
+
+  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px;border-top:1px solid rgba(140,190,255,.2);padding-top:44px;}
+  .kpi div b{display:block;font-size:clamp(30px,3.4vw,42px);background:linear-gradient(90deg,#fff,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;}
+  .kpi div span{color:rgba(206,225,252,.66);font-size:13.5px;}
+
+  /* ---------- 业务 ---------- */
+  #business{background:#fff;}
+  .biz{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;}
+  .biz-card{
+    border:1px solid var(--line);border-radius:20px;padding:30px 28px;background:linear-gradient(180deg,#fff,#f4f7fd);
+    position:relative;overflow:hidden;transition:transform .45s,box-shadow .45s;
+  }
+  .biz-card::before{content:"";position:absolute;inset:0 auto auto 0;height:4px;width:100%;background:linear-gradient(90deg,var(--blue-600),var(--cyan));transform:scaleX(0);transform-origin:left;transition:transform .5s;}
+  .biz-card:hover{transform:translateY(-8px);box-shadow:0 26px 54px rgba(12,40,100,.14);}
+  .biz-card:hover::before{transform:scaleX(1);}
+  .biz-icon{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:rgba(13,91,212,.09);margin-bottom:18px;}
+  .biz-icon svg{width:26px;height:26px;stroke:var(--blue-600);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .biz-card h3{margin:0 0 10px;font-size:21px;}
+  .biz-card p{color:var(--muted);font-size:14.5px;margin:0 0 16px;}
+  .biz-card ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;}
+  .biz-card ul li{margin-bottom:6px;}
+
+  /* ---------- 产品 ---------- */
+  #products{background:var(--paper);}
+  .prod{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
+  .prod-card{
+    background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px;
+    transition:transform .4s,box-shadow .4s;
+  }
+  .prod-card:hover{transform:translateY(-6px) scale(1.015);box-shadow:0 22px 46px rgba(12,40,100,.12);}
+  .prod-card .cat{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--blue-600);font-weight:700;}
+  .prod-card h4{margin:8px 0 8px;font-size:17.5px;}
+  .prod-card p{margin:0;color:var(--muted);font-size:14px;}
+
+  /* ---------- 愿景 ---------- */
+  #vision{background:linear-gradient(150deg,#02224f,#0b2d6b 45%,#0d5bd4);color:#fff;position:relative;overflow:hidden;}
+  #vision .eyebrow{color:var(--cyan);}
+  .vision-quote{font-size:clamp(22px,3.2vw,38px);font-weight:700;line-height:1.35;max-width:900px;margin:0 0 20px;}
+  .vision-quote span{background:linear-gradient(90deg,#41d8f0,#a9e8ff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .vision-note{color:rgba(206,225,252,.75);max-width:700px;margin:0 0 58px;}
+  .pillars{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;}
+  .pillar{border-left:2px solid var(--cyan);padding:6px 0 6px 20px;}
+  .pillar h4{margin:0 0 8px;font-size:18px;}
+  .pillar p{margin:0;color:rgba(206,225,252,.72);font-size:14.5px;}
+  .goal-list{margin-top:54px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .goal{background:rgba(255,255,255,.07);border:1px solid rgba(140,190,255,.2);border-radius:16px;padding:22px;}
+  .goal b{display:block;font-size:15px;color:var(--cyan);margin-bottom:6px;letter-spacing:.05em;}
+  .goal span{font-size:14px;color:rgba(214,231,255,.78);}
+
+  /* ---------- 页脚 ---------- */
+  footer{background:#04102b;color:rgba(180,205,240,.6);padding:56px clamp(20px,5vw,40px) 40px;font-size:13.5px;}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;align-items:flex-end;}
+  footer .sig{font-size:clamp(20px,2.6vw,30px);color:#fff;font-weight:700;letter-spacing:.04em;}
+  footer small{display:block;margin-top:10px;opacity:.7;line-height:1.7;}
 </style>
 </head>
 <body>
-  <div class="box">
-    <h2>GitHub Copilot - 飞利浦编年史HTML页面</h2>
-    <p>Placeholder: replace with real output from this AI.</p>
+<div id="progress"></div>
+
+<nav id="nav">
+  <div class="brand">
+    <svg class="shield" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="29" fill="none" stroke="currentColor" stroke-width="3"/>
+      <path d="M20 24h9m-9 8h9m-9 8h9M35 20v24M44 24l-6 8 6 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <span>PHILIPS</span>
   </div>
+  <ul>
+    <li><a href="#history">编年史</a></li>
+    <li><a href="#transform">转型之路</a></li>
+    <li><a href="#business">核心业务</a></li>
+    <li><a href="#products">标志产品</a></li>
+    <li><a href="#vision">未来愿景</a></li>
+  </ul>
+</nav>
+
+<header class="hero">
+  <div class="glow a"></div>
+  <div class="glow b"></div>
+  <svg class="wave" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#41d8f0" stop-opacity=".55"/>
+        <stop offset="100%" stop-color="#1e6bff" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="M0,620 C240,540 380,720 640,640 C900,560 1060,700 1440,600 L1440,900 L0,900 Z" fill="url(#lg)"/>
+    <path d="M0,700 C260,640 420,790 700,720 C980,650 1160,780 1440,700 L1440,900 L0,900 Z" fill="#1e6bff" opacity=".22"/>
+  </svg>
+
+  <div class="hero-inner">
+    <div class="kicker">1891 — 至今 · 跨越三个世纪的创新长河</div>
+    <h1>从一盏灯的光<br/>到一生的健康关怀</h1>
+    <p class="lead">
+      1891 年，埃因霍温的一间旧厂房里点亮了第一支碳丝灯泡。一个多世纪后，
+      同一个名字出现在全球的手术室、重症监护室与千万家庭的浴室镜前。
+      这是一家公司持续重塑自己的故事——先照亮世界，再守护生命。
+    </p>
+    <div class="hero-stats">
+      <div><span>1891</span><small>创立于荷兰埃因霍温</small></div>
+      <div><span>100+</span><small>国家与地区提供服务</small></div>
+      <div><span>约 7 万</span><small>全球员工（健康科技时代）</small></div>
+      <div><span>25 亿</span><small>目标：每年改善的人群生命</small></div>
+    </div>
+  </div>
+  <div class="scroll-cue">SCROLL<i></i></div>
+</header>
+
+<!-- ============ 编年史 ============ -->
+<section id="history">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">Chronicle</div>
+      <h2 class="title">一部与现代生活并行的编年史</h2>
+      <p class="sub">灯泡、收音机、剃须刀、卡带、CD、CT 与超声——飞利浦的每一次跃迁，几乎都改变了普通人一天的生活方式。</p>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">1891</div>
+          <h3>Philips &amp; Co. 诞生</h3>
+          <p>Gerard Philips 与父亲 Frederik 在荷兰埃因霍温创立公司，专注生产碳丝白炽灯泡。弟弟 Anton 的加入让工厂迅速成长为欧洲最大的灯泡制造商之一。</p>
+          <span class="tag">照明时代</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">1914</div>
+          <h3>建立物理研究实验室（NatLab）</h3>
+          <p>公司把"科研"写进企业基因。X 射线管、真空管等技术相继诞生，为日后进入医疗与电子领域埋下伏笔。</p>
+          <span class="tag">科研基因</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">1918 — 1930s</div>
+          <h3>踏入医疗与广播</h3>
+          <p>推出医用 X 射线管，正式进入医疗影像领域；1927 年开始生产收音机，数年内成为全球最大的收音机制造商之一，把声音带进千家万户。</p>
+          <span class="tag">医疗影像起点</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">1939</div>
+          <h3>Philishave 电动剃须刀</h3>
+          <p>旋转式刀头的电动剃须刀问世，成为飞利浦最长寿的消费品牌之一，也奠定了"个人健康护理"业务的雏形。</p>
+          <span class="tag">个人护理</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">1963</div>
+          <h3>紧凑型盒式磁带 Compact Cassette</h3>
+          <p>飞利浦发布卡带标准并对外开放授权，让音乐第一次真正可以被随身携带、自由录制。全球音乐消费方式由此改写。</p>
+          <span class="tag">改变世界的标准</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">1982 — 1983</div>
+          <h3>与索尼共创 CD</h3>
+          <p>激光唱片（Compact Disc）商用化，开启数字音频时代；随后延伸出 CD-ROM、DVD 与蓝光生态，成为二十世纪最成功的技术标准之一。</p>
+          <span class="tag">数字纪元</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">1990s — 2000s</div>
+          <h3>医疗版图扩张</h3>
+          <p>先后整合 ADAC Labs、安捷伦医疗方案与 Marconi Medical Systems（前 Picker），在 CT、MR、核医学与病人监护领域建立全球领先地位。</p>
+          <span class="tag">战略并购</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">2011 — 2013</div>
+          <h3>"Accelerate!" 变革与新品牌承诺</h3>
+          <p>公司启动全面转型计划，2013 年发布全新品牌承诺 <em>Innovation and you</em>，明确聚焦"健康舒适、优质生活"，从多元电子集团向解决方案公司迈进。</p>
+          <span class="tag">转型启动</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">2016</div>
+          <h3>照明业务独立</h3>
+          <p>照明业务分拆上市，后更名为 Signify。飞利浦告别了自己诞生的行业——这是公司历史上最具象征意义的一次"断舍离"。</p>
+          <span class="tag">告别灯泡</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">2021</div>
+          <h3>剥离家电，全面聚焦健康科技</h3>
+          <p>家用电器业务出售（品牌继续授权使用），飞利浦正式完成向"健康科技公司"的身份切换，全部资源投向从健康生活到精准诊断、治疗与家庭护理的关护全程。</p>
+          <span class="tag">身份重塑</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">2022 — 2024</div>
+          <h3>重建信任与执行力</h3>
+          <p>面对睡眠呼吸设备召回带来的挑战，公司以"患者安全与质量第一"为原则重塑质量管理体系，同时推进简化组织、聚焦增长与提升盈利能力的三年计划。</p>
+          <span class="tag">质量优先</span>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="dot"></div>
+        <div class="tl-card">
+          <div class="tl-year">2025 — 未来</div>
+          <h3>AI 驱动的关护全程</h3>
+          <p>把信息学、云与人工智能贯穿影像、监护与治疗，让医院更高效、让护理走进家庭，目标是让优质医疗对更多人可及、可负担。</p>
+          <span class="tag">下一个百年</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 转型 ============ -->
+<section id="transform">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">Transformation</div>
+      <h2 class="title">一次少有企业敢做的自我重写</h2>
+      <p class="sub">多数百年企业的转型是"再增加一条业务线"。飞利浦选择的却是：卖掉自己发明的行业，把全部身家押在健康科技上。</p>
+    </div>
+
+    <div class="shift">
+      <div class="shift-card reveal">
+        <div class="num">01</div>
+        <h3>从产品到解决方案</h3>
+        <p>不再只卖一台设备，而是提供"设备 + 软件 + 服务 + 数据"的长期方案，与医院签订多年期战略伙伴合作。</p>
+        <div class="from-to"><em>卖硬件</em><span class="arrow">→</span><strong>卖结果</strong></div>
+      </div>
+      <div class="shift-card reveal">
+        <div class="num">02</div>
+        <h3>从多元集团到单一使命</h3>
+        <p>照明、半导体、电视、家电陆续剥离，组织被重新拆解为诊断与治疗、互联关护、个人健康三大清晰板块。</p>
+        <div class="from-to"><em>多元电子</em><span class="arrow">→</span><strong>健康科技</strong></div>
+      </div>
+      <div class="shift-card reveal">
+        <div class="num">03</div>
+        <h3>从设备制造到软件与 AI</h3>
+        <p>影像后处理、放射信息学、心脏与肿瘤工作流、患者数据平台——软件与订阅式收入正成为新的增长引擎。</p>
+        <div class="from-to"><em>金属与线圈</em><span class="arrow">→</span><strong>算法与数据</strong></div>
+      </div>
+      <div class="shift-card reveal">
+        <div class="num">04</div>
+        <h3>从医院到家庭</h3>
+        <p>远程监护、睡眠与呼吸治疗、母婴与口腔健康，把关护延伸到出院之后的真实生活场景，形成"关护全程"闭环。</p>
+        <div class="from-to"><em>院内诊疗</em><span class="arrow">→</span><strong>关护全程</strong></div>
+      </div>
+      <div class="shift-card reveal">
+        <div class="num">05</div>
+        <h3>从规模优先到质量优先</h3>
+        <p>经历产品召回的考验后，公司把患者安全、质量管理与合规体系置于一切增长目标之上，重建行业与用户的信任。</p>
+        <div class="from-to"><em>增长第一</em><span class="arrow">→</span><strong>患者第一</strong></div>
+      </div>
+      <div class="shift-card reveal">
+        <div class="num">06</div>
+        <h3>从线性生产到循环经济</h3>
+        <p>设备翻新再制造、以旧换新、绿色供应链与可再生电力，让"负责任"成为可量化的经营指标而非口号。</p>
+        <div class="from-to"><em>用完即弃</em><span class="arrow">→</span><strong>循环再生</strong></div>
+      </div>
+    </div>
+
+    <div class="kpi reveal">
+      <div><b>3 大</b><span>核心业务板块支撑全部收入</span></div>
+      <div><b>100+</b><span>年医疗影像技术积累</span></div>
+      <div><b>全球 Top 3</b><span>影像、监护与个人健康多品类领先</span></div>
+      <div><b>碳中和</b><span>自身运营已实现并持续向供应链延伸</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 业务 ============ -->
+<section id="business">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">Businesses</div>
+      <h2 class="title">今天的飞利浦：三大支柱，一条关护全程</h2>
+      <p class="sub">健康生活 → 疾病预防 → 精准诊断 → 微创治疗 → 康复与家庭护理，构成一个持续循环的价值链。</p>
+    </div>
+
+    <div class="biz">
+      <div class="biz-card reveal">
+        <div class="biz-icon">
+          <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="12" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="11" r="3"/></svg>
+        </div>
+        <h3>诊断与治疗</h3>
+        <p>覆盖影像诊断到介入治疗的完整链路，是公司规模最大的业务板块。</p>
+        <ul>
+          <li>磁共振（MR）、CT、X 光与移动 DR</li>
+          <li>介入影像与导管室一体化方案（含腔内影像）</li>
+          <li>超声：心脏、妇产、急重症与床旁即时诊断</li>
+          <li>精准诊断信息学、放射与病理工作流平台</li>
+        </ul>
+      </div>
+
+      <div class="biz-card reveal">
+        <div class="biz-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M5 12h3l2-4 3 8 2-4h4"/></svg>
+        </div>
+        <h3>互联关护</h3>
+        <p>把患者数据在院内外连成一张网，让临床决策更快、更早、更准。</p>
+        <ul>
+          <li>病人监护与临床信息系统</li>
+          <li>急救复苏、除颤与院前急救方案</li>
+          <li>远程重症监护（eICU）与院外远程监护</li>
+          <li>睡眠与呼吸治疗、家用无创通气</li>
+        </ul>
+      </div>
+
+      <div class="biz-card reveal">
+        <div class="biz-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.4-7 10-7 10z"/></svg>
+        </div>
+        <h3>个人健康</h3>
+        <p>把专业级的健康能力做进日常，是飞利浦离普通人最近的一面。</p>
+        <ul>
+          <li>Sonicare 声波震动牙刷与口腔护理</li>
+          <li>Philips Shaver / OneBlade 剃须与造型</li>
+          <li>Avent 母婴喂养与育儿产品</li>
+          <li>美容护理与个人健康数字应用</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 产品 ============ -->
+<section id="products">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">Products</div>
+      <h2 class="title">从手术室到洗手台的产品谱系</h2>
+      <p class="sub">同一个品牌，既在为医生减少一次穿刺，也在为你多睡好一小时。</p>
+    </div>
+    <div class="prod">
+      <div class="prod-card reveal"><div class="cat">Imaging</div><h4>MR 磁共振系统</h4><p>无氦损耗冷却与压缩感知加速技术，让扫描更快、更安静，也更容易在资源有限的医院落地。</p></div>
+      <div class="prod-card reveal"><div class="cat">Imaging</div><h4>光谱 CT</h4><p>一次扫描同时获得解剖结构与物质成分信息，帮助医生减少重复检查与诊断不确定性。</p></div>
+      <div class="prod-card reveal"><div class="cat">Intervention</div><h4>介入导管室方案</h4><p>影像引导下的微创治疗，用更小的创口完成心血管与神经介入手术。</p></div>
+      <div class="prod-card reveal"><div class="cat">Ultrasound</div><h4>高端与便携超声</h4><p>从三甲医院的心脏超声到基层与急诊床旁，把诊断能力送到患者身边。</p></div>
+      <div class="prod-card reveal"><div class="cat">Monitoring</div><h4>病人监护系统</h4><p>覆盖手术室、ICU 与普通病房，异常趋势更早被发现，让抢救提前发生。</p></div>
+      <div class="prod-card reveal"><div class="cat">Emergency</div><h4>自动体外除颤器 AED</h4><p>让没有医学背景的普通人，也能在黄金四分钟内挽救一条生命。</p></div>
+      <div class="prod-card reveal"><div class="cat">Sleep &amp; Respiratory</div><h4>睡眠呼吸与家用通气</h4><p>面向睡眠呼吸暂停与慢阻肺人群的家庭治疗方案，让康复回到日常生活中。</p></div>
+      <div class="prod-card reveal"><div class="cat">Oral Care</div><h4>Sonicare 声波牙刷</h4><p>声波震动清洁与压力感应，把牙医诊室的护理标准搬进家庭浴室。</p></div>
+      <div class="prod-card reveal"><div class="cat">Grooming</div><h4>Shaver &amp; OneBlade</h4><p>始于 1939 年的旋转刀头传统，延续八十余年的日常仪式感。</p></div>
+      <div class="prod-card reveal"><div class="cat">Mother &amp; Child</div><h4>Avent 母婴护理</h4><p>自然仿生的喂养设计，陪伴无数家庭度过生命最初的一千天。</p></div>
+      <div class="prod-card reveal"><div class="cat">Informatics</div><h4>影像与临床信息平台</h4><p>把散落在不同科室的数据整合成统一工作流，让协作不再依赖打印与光盘。</p></div>
+      <div class="prod-card reveal"><div class="cat">AI</div><h4>AI 辅助工作流</h4><p>自动摆位、图像重建、异常提示与报告辅助，把医生的时间还给病人。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 愿景 ============ -->
+<section id="vision">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">Vision</div>
+      <p class="vision-quote">让优质医疗<span>不再是少数人的特权</span>——通过有意义的创新，改善每年数十亿人的生活。</p>
+      <p class="vision-note">飞利浦的长期目标是每年改善 25 亿人的生活，其中包含 4 亿名来自医疗资源欠缺社区的人群。这不是一句愿景标语，而是被写进年度报告、逐年披露进度的经营指标。</p>
+    </div>
+
+    <div class="pillars">
+      <div class="pillar reveal"><h4>更好的健康结果</h4><p>用更早的诊断、更精准的治疗与更连续的数据，把"治已病"变成"防未病"。</p></div>
+      <div class="pillar reveal"><h4>更好的员工体验</h4><p>用自动化与 AI 减轻医护的重复劳动，缓解全球医护人力短缺的结构性压力。</p></div>
+      <div class="pillar reveal"><h4>更低的关护成本</h4><p>提高设备利用率与流程效率，让医疗系统在有限预算下服务更多患者。</p></div>
+      <div class="pillar reveal"><h4>更可持续的地球</h4><p>循环经济、绿色设计与再制造，让医疗创新不以环境为代价。</p></div>
+    </div>
+
+    <div class="goal-list">
+      <div class="goal reveal"><b>25 亿人 / 年</b><span>2030 年前每年改善的生命数量目标</span></div>
+      <div class="goal reveal"><b>4 亿人</b><span>其中来自医疗资源欠缺社区的人群</span></div>
+      <div class="goal reveal"><b>循环设计</b><span>推动全部大型医疗设备可翻新、可回收</span></div>
+      <div class="goal reveal"><b>负责任的 AI</b><span>以临床验证与可解释性为前提部署人工智能</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="sig">Innovation and you</div>
+      <small>
+        飞利浦编年史 · 一个从灯泡走向生命关护的品牌故事<br/>
+        本页面为信息展示用途的设计作品，内容基于公开资料整理，非飞利浦官方发布物。
+      </small>
+    </div>
+    <div><small>© 1891 — 2026 · Made with care</small></div>
+  </div>
+</footer>
+
+<script>
+  const bar = document.getElementById('progress');
+  const nav = document.getElementById('nav');
+  function onScroll(){
+    const h = document.documentElement;
+    const max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+    nav.classList.toggle('solid', h.scrollTop > 80);
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach((e,i)=>{
+      if(e.isIntersecting){
+        e.target.style.transitionDelay = Math.min(i*70, 280) + 'ms';
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:.14, rootMargin:'0px 0px -60px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  const hero = document.querySelector('.hero-inner');
+  window.addEventListener('scroll', ()=>{
+    const y = window.scrollY;
+    if(y < window.innerHeight){
+      hero.style.transform = 'translateY(' + y * 0.14 + 'px)';
+      hero.style.opacity = String(Math.max(0, 1 - y / (window.innerHeight * 0.85)));
+    }
+  }, {passive:true});
+</script>
 </body>
 </html>

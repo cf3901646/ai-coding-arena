@@ -24,15 +24,16 @@ function renderHeroStats() {
   const top = rank[0];
   const fastest = AIS.map((ai) => {
     const mins = rated
-      .map((s) => (SCORES[s.id][ai.id] || {}).minutes)
+      .filter((s) => isParticipant(s.id, ai.id))
+      .map((s) => ((SCORES[s.id] || {})[ai.id] || {}).minutes)
       .filter((m) => typeof m === "number");
     return { ai, mins: mins.length ? Math.min(...mins) : Infinity };
   }).sort((a, b) => a.mins - b.mins)[0];
 
   el.innerHTML = `
-    <div class="hero-stat"><dt>参评模型</dt><dd>${AIS.length}</dd></div>
+    <div class="hero-stat"><dt>参评模型</dt><dd>${rank.length}</dd></div>
     <div class="hero-stat"><dt>测试场景</dt><dd>${rated.length}<small>/ ${SCENARIOS.length}</small></dd></div>
-    <div class="hero-stat"><dt>综合第一</dt><dd style="font-size:22px">${top.ai.name}</dd></div>
+    <div class="hero-stat"><dt>综合第一</dt><dd style="font-size:22px">${top ? top.ai.name : "—"}</dd></div>
     <div class="hero-stat"><dt>出图最快</dt><dd style="font-size:22px">${
       fastest && fastest.mins !== Infinity ? fastest.ai.name : "—"
     }</dd></div>`;
@@ -68,7 +69,6 @@ function renderPodium() {
 
   el.innerHTML = overallRanking()
     .map((r, i) => {
-      const rated = ratedScenarios().length;
       const perMax = CRITERIA.length * 10;
       return `
       <div class="podium-row ${i === 0 ? "is-first" : ""}">
@@ -76,10 +76,10 @@ function renderPodium() {
         <span class="podium-name">
           <i class="dot" style="background:${r.ai.color}"></i>
           ${r.ai.name}
-          <span class="sub">${r.ai.vendor}</span>
+          <span class="sub">${r.ai.vendor} · 参赛 ${r.joined} 场</span>
         </span>
-        <span class="podium-score">${r.total}<small> / ${
-        rated * perMax
+        <span class="podium-score">${r.pct.toFixed(0)}%<small> · ${r.total}/${
+        r.joined * perMax
       }</small></span>
       </div>`;
     })
@@ -124,7 +124,6 @@ function renderOverallTable() {
     <tr>
       <th>模型</th>
       ${rated.map((s) => `<th>${s.title}</th>`).join("")}
-      <th>总分</th>
       <th>得分率</th>
     </tr>`;
 
@@ -140,10 +139,13 @@ function renderOverallTable() {
         </span>
       </td>
       ${r.perScenario
-        .map((v) => `<td>${v}<span style="opacity:.4"> / ${perMax}</span></td>`)
+        .map((v) =>
+          v === null
+            ? `<td style="opacity:.35">未参赛</td>`
+            : `<td>${v}<span style="opacity:.4"> / ${perMax}</span></td>`
+        )
         .join("")}
-      <td class="total">${r.total}</td>
-      <td>${r.pct.toFixed(0)}%</td>
+      <td class="total">${r.pct.toFixed(0)}%</td>
     </tr>`
     )
     .join("");
@@ -155,7 +157,7 @@ function renderOverallTable() {
         <tbody>${body}</tbody>
       </table>
     </div>
-    <div class="table-note">总分 = 已完成场景的 ${CRITERIA.length} 项维度得分之和，单场景满分 ${perMax} 分。仅统计已完成评测的 ${rated.length} 个场景。</div>`;
+    <div class="table-note">单场景满分 ${perMax} 分（${CRITERIA.length} 项维度 × 10）。两场参赛阵容不同，因此排名按<strong>已参赛场次的平均得分率</strong>计算，避免参赛场次多的模型被总分累加拉高。</div>`;
 }
 
 /* ---------- Radar ---------- */
@@ -166,13 +168,16 @@ function renderRadar() {
   const rated = ratedScenarios();
   if (!rated.length) return;
 
+  const ranked = overallRanking();
   const datasets = makeRadarDatasets((aiId, key) => {
-    const sum = rated.reduce(
-      (acc, s) => acc + (SCORES[s.id][aiId].criteria[key] || 0),
+    const joined = rated.filter((s) => isParticipant(s.id, aiId));
+    if (!joined.length) return 0;
+    const sum = joined.reduce(
+      (acc, s) => acc + ((((SCORES[s.id] || {})[aiId] || {}).criteria || {})[key] || 0),
       0
     );
-    return +(sum / rated.length).toFixed(1);
-  });
+    return +(sum / joined.length).toFixed(1);
+  }, ranked.map((r) => r.ai));
 
   new Chart(cv, buildRadarConfig(datasets));
 }
