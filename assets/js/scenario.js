@@ -4,6 +4,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   applyChartDefaults();
+  renderNav();
 
   const id = document.body.dataset.scenario;
   const scenario = SCENARIOS.find((s) => s.id === id);

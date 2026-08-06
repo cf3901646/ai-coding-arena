@@ -200,6 +200,42 @@ function buildRadarConfig(datasets) {
 }
 
 /* ---------- Shared chrome ---------- */
+/* 导航是全站唯一定义。四个页面的 HTML 里各有一份静态副本作为
+   无 JS 时的兜底，载入后一律由这里重建，避免多份副本随改动漂移，
+   也能让浏览器缓存到的旧 HTML 自动纠正成当前导航。 */
+const NAV_ITEMS = [
+  { label: "总览", page: "home" },
+  { label: "赛车游戏", page: "racing-game" },
+  { label: "编年史页面", page: "philips-chronicle" },
+  { label: "数据看板", page: "dashboard" },
+  { label: "One more thing", page: "home", hash: "one-more-thing" },
+];
+
+function renderNav() {
+  const nav = document.querySelector(".nav-links");
+  if (!nav) return;
+
+  const current = document.body.dataset.scenario || "home";
+  const up = current === "home" ? "" : "../";
+  const pathOf = (page) =>
+    page === "home" ? "index.html" : "scenarios/" + page + ".html";
+
+  const brand = document.querySelector(".brand");
+  if (brand) brand.setAttribute("href", up + "index.html");
+
+  nav.innerHTML = NAV_ITEMS.map((item) => {
+    const samePage = item.page === current;
+    let href;
+    if (item.hash) {
+      href = samePage ? "#" + item.hash : up + pathOf(item.page) + "#" + item.hash;
+    } else {
+      href = up + pathOf(item.page);
+    }
+    const cls = samePage && !item.hash ? ' class="active"' : "";
+    return `<a href="${href}"${cls}>${item.label}</a>`;
+  }).join("");
+}
+
 function initNavSpy() {
   const nav = document.querySelector(".nav-links");
   if (!nav) return;

@@ -4,6 +4,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   applyChartDefaults();
+  renderNav();
   renderHeroStats();
   renderVerdict();
   renderPodium();
