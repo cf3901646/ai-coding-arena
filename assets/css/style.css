@@ -886,16 +886,30 @@ table.data tbody tr.is-first td.total {
 
 .demo-body {
   display: grid;
-  grid-template-columns: 1.55fr 1fr;
+  /* minmax(0,…) 避免 .demo-frame 的 aspect-ratio 在被拉伸时
+     反推出巨大的自动最小宽度，从而挤压右侧点评栏 */
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr);
   gap: 0;
+}
+
+.demo-body > * {
+  min-width: 0;
 }
 
 .demo-frame {
   position: relative;
   background: var(--card-03);
   border-right: 1px solid var(--border-02);
-  aspect-ratio: 16 / 10;
   min-height: 320px;
+}
+
+/* 用伪元素撑出 16:10 的最小高度。
+   不用 aspect-ratio 是因为它在 grid 里会反推出巨大的自动最小宽度，
+   把右侧点评栏挤成竖排；伪元素只定下限，右栏更高时 frame 可跟随拉伸。 */
+.demo-frame::before {
+  content: "";
+  display: block;
+  padding-top: 62.5%;
 }
 
 /* 版本切换（原始产出 / 修复版） */

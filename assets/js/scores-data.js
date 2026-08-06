@@ -19,8 +19,9 @@ const SCENARIOS = [
     id: "racing-game",
     title: "简单赛车游戏",
     short: "赛车游戏",
-    desc: "用 HTML5/Canvas 或类似技术实现一个可玩的简单赛车小游戏",
-    prompt: "做一个简单的赛车游戏，单文件 HTML，打开就能玩。",
+    desc: "在浏览器里实现一个可自由驾驶的开放世界开车游戏，WASD 操控",
+    prompt:
+      "帮我做一个运行在 HTML 上的大世界开车游戏，你自己构想细节，要求是用 WASD 操作车辆，游戏要好玩。不要问我任何细节，所有的你自己想，自己验证，可行后交付给我。",
     page: "scenarios/racing-game.html",
     participants: ["kiro", "copilot", "antigravity", "codex"],
   },
@@ -67,49 +68,53 @@ const SCORES = {
       timeSpent: "1 分钟",
       minutes: 1,
       files: "单文件 HTML（约 70KB，Cyber Horizon 3D，基于 Three.js CDN 的开放世界 3D 驾驶）",
-      notes: "画面效果花哨（3D 开放世界），但缺乏具体玩法和目标指示，车辆操控存在 bug，需联网加载 Three.js。生成速度极快（1 分钟）。",
-      pros: ["3D 开放世界", "出图最快"],
-      cons: ["没有玩法目标", "操控有 bug", "依赖 CDN"],
+      notes:
+        "对照真实提示词的三条硬要求：「大世界」达标（Three.js 3D 开放世界，worldSize=1800，带小地图）；「WASD」达标且实现稳健（用 e.code 取键，中文输入法激活时实测仍可驾驶）；「好玩」未达标——霓虹画面花哨，但缺乏具体玩法引导和目标指示。提示词明确要求「自己验证，可行后交付」，而实际操控存在 bug，说明交付前未做有效自测。1 分钟出图是四者最快。",
+      pros: ["3D 开放世界，画面观感最强", "出图最快（1 分钟）", "WASD 用 e.code，输入法下不失效"],
+      cons: ["没有玩法目标引导", "操控有 bug，未做交付前自测", "依赖 CDN，断网即白屏"],
       demoPath: "demos/antigravity/racing-game/index.html",
       screenshot: "assets/img/antigravity-racing-game.png",
     },
     "codex": {
-      criteria: { functionality: 2, codeQuality: 4, visualDesign: 3, performance: 4, oneShot: 3, instructionFit: 3 },
+      criteria: { functionality: 2, codeQuality: 4, visualDesign: 3, performance: 4, oneShot: 3, instructionFit: 4 },
       timeSpent: "15 分钟",
       minutes: 15,
       files: "单文件 HTML（约 14KB，Nightshift Open City Driver）",
-      notes: "画面简陋，没有具体玩法或操作指示，车辆操控也存在 bug。四者中效果最弱。",
-      pros: ["零外部依赖"],
-      cons: ["画面简陋", "无玩法无指示", "操控有 bug"],
+      notes:
+        "三条硬要求形式上都碰到了：有开放城市与小地图、WASD 用 e.code 实现（输入法下不失效）、也确实写了「午夜环城赛」任务和屏幕操作说明。但执行质量最弱——画面是四者中最简陋的（14KB，纯 2D 色块），实测按住 W 两秒半后时速仅 14km/h，加速迟滞得几乎开不动，「好玩」完全没达成。同样违背了「自己验证，可行后交付」这一条。",
+      pros: ["零外部依赖，断网可用", "写了任务系统和操作说明", "WASD 用 e.code，输入法下不失效"],
+      cons: ["画面四者中最简陋", "加速迟滞，实测 2.5 秒仅到 14km/h", "操控有 bug，未做交付前自测"],
       demoPath: "demos/codex/racing-game/index.html",
       screenshot: "assets/img/codex-racing-game.png",
     },
     "kiro": {
-      criteria: { functionality: 9, codeQuality: 8, visualDesign: 8, performance: 9, oneShot: 8, instructionFit: 9 },
+      criteria: { functionality: 9, codeQuality: 8, visualDesign: 8, performance: 9, oneShot: 8, instructionFit: 10 },
       timeSpent: "35 分钟",
       minutes: 35,
       files: "单文件 HTML（约 38KB）",
-      notes: "综合效果最佳：有明确的玩法和操作指示，画面细节丰富，车辆操控流畅无明显 bug。耗时也最长（35 分钟）。",
-      pros: ["玩法完整", "有操作指示", "操控流畅", "画面细节好"],
-      cons: ["耗时最长"],
+      notes:
+        "唯一三条硬要求全部达标的产出：「大世界」做成城区—工业区—海岸—荒野高速的无缝大地图并带昼夜循环；「WASD」用 e.code 实现且对方向键、空格做了 preventDefault（输入法激活时实测仍可驾驶）；「好玩」有限时竞速、快递任务、能量芯片收集、巡逻车追逐等完整循环，屏幕上有明确操作指示。也是唯一满足「自己验证，可行后交付」的一家——操控流畅，未发现 bug。代价是耗时最长（35 分钟）。",
+      pros: ["三条硬要求全达标", "任务循环完整，有明确操作指示", "操控流畅无 bug，交付前确实自测过", "无缝大地图 + 昼夜循环"],
+      cons: ["耗时最长（35 分钟）"],
       demoPath: "demos/kiro/racing-game/index.html",
       screenshot: "assets/img/kiro-racing-game.png",
     },
     "copilot": {
-      criteria: { functionality: 5, codeQuality: 7, visualDesign: 5, performance: 8, oneShot: 6, instructionFit: 5 },
+      criteria: { functionality: 5, codeQuality: 7, visualDesign: 5, performance: 8, oneShot: 6, instructionFit: 4 },
       timeSpent: "15 分钟",
       minutes: 15,
       files: "单文件 HTML（约 32KB）",
-      notes: "车辆操控流畅、无明显 bug，但缺乏具体的玩法设计或目标指示，更像一个驾驶 demo 而非完整游戏。",
-      pros: ["操控流畅", "代码结构清晰"],
-      cons: ["缺少玩法目标", "视觉一般"],
+      notes:
+        "「大世界」达标且规模最大（WORLD_SIZE=7000，城市/乡村/沙漠/湖泊四类地貌），车辆操控流畅。但「WASD」这一条实测存在硬伤：键盘监听只读 e.key.toLowerCase()，未使用 e.code——中文输入法激活时浏览器把 e.key 置为 Process，实测车辆时速直接归零、完全无法驾驶。这在中文办公环境里是必现问题，也说明「自己验证」没有覆盖真实使用场景。玩法上有金币收集和圈数挑战，但缺乏引导，整体更像驾驶 demo。",
+      pros: ["世界规模最大（WORLD_SIZE=7000）", "操控手感流畅", "代码结构清晰"],
+      cons: ["中文输入法下 WASD 完全失效（实测时速归零）", "玩法缺乏引导", "视觉表现一般"],
       demoPath: "demos/copilot/racing-game/index.html",
       screenshot: "assets/img/copilot-racing-game.png",
     },
   },
   "philips-chronicle": {
     "kiro": {
-      criteria: { functionality: 10, codeQuality: 9, visualDesign: 9, performance: 8, oneShot: 10, instructionFit: 10 },
+      criteria: { functionality: 10, codeQuality: 9, visualDesign: 7, performance: 8, oneShot: 10, instructionFit: 10 },
       timeSpent: "33 分 30 秒",
       minutes: 33.5,
       files: "单文件 HTML（80KB）",
@@ -122,9 +127,13 @@ const SCORES = {
         "特别值得注意的是超声平台「Alturion」——初次核查时因公开报道稀少一度被误判为虚构，" +
         "后经 FDA 510(k) 数据库核实确认真实存在（受理号 K260667，申请人 Philips Ultrasound, LLC，2026 年 6 月 29 日获批），" +
         "距本次评测仅五周。四份里只有它引用到了这个级别的最新产品信息。" +
-        "工程细节也最专业：滚动进度条、导航章节高亮、跳转主内容的无障碍链接，且是四份中唯一正确实现 prefers-reduced-motion 降级的。",
+        "工程细节也最专业：滚动进度条、导航章节高亮、跳转主内容的无障碍链接，且是四份中唯一正确实现 prefers-reduced-motion 降级的。" +
+        "视觉一项被明显扣分：实测页面底色为 rgb(5,7,13)（亮度 7，近纯黑），是四份中唯一的暗色主题——" +
+        "Copilot 与 Antigravity 的亮度分别为 248 和 250。暗色科技风本身完成度不低，" +
+        "但飞利浦对外品牌体系以白底 + 品牌蓝为主，企业官网、年报、产品页均为亮色调，" +
+        "这份产出直接用于对外场景需要整体重做配色，属于实打实的返工成本，因此该项从 9 分下调至 7 分。",
       pros: ["叙事最完整有作者感", "数据经核查全部属实", "引用到五周前刚获批的新品", "唯一做了无障碍降级", "零渲染缺陷"],
-      cons: ["页面 17215px 偏长", "耗时最久"],
+      cons: ["暗色主题不符合企业品牌规范，对外使用需重做配色", "页面 17215px 偏长", "耗时最久"],
       demoPath: "demos/kiro/philips-chronicle/index.html",
       screenshot: "assets/img/kiro-philips-chronicle.png",
     },
@@ -137,8 +146,10 @@ const SCORES = {
         "结构最工整、交付最稳的一份：17 个年份节点、12 个左右交错的时间轴节点、6 张转型卡、三大业务支柱、12 张产品卡，四个要求章节全覆盖。" +
         "性能最好——32KB、1 个请求、163ms 加载、零外部依赖，实测 60fps，且无任何渲染缺陷。" +
         "扣分点在视觉：配色与版式偏「标准企业官网」，稳妥但缺少记忆点，是四份里最不容易被记住的。" +
-        "另未处理 prefers-reduced-motion（47 个动画元素在减少动效模式下依旧靠滚动才显示），「约 7 万员工」与 2024 年报的 68,419 略有出入。",
-      pros: ["加载最快 32KB 零依赖", "结构工整覆盖全", "零渲染缺陷"],
+        "另未处理 prefers-reduced-motion（47 个动画元素在减少动效模式下依旧靠滚动才显示），「约 7 万员工」与 2024 年报的 68,419 略有出入。" +
+        "但它的亮色调（实测底色亮度 248）与飞利浦对外品牌体系一致，拿来即用无需改色——" +
+        "这一点与 Kiro 恰好互补：两者视觉同为 7 分，失分原因却相反，Copilot 是「对味但平庸」，Kiro 是「出彩但跑偏」。",
+      pros: ["加载最快 32KB 零依赖", "结构工整覆盖全", "零渲染缺陷", "亮色调符合企业品牌规范"],
       cons: ["视觉缺少记忆点", "未做无障碍降级", "员工数略不准"],
       demoPath: "demos/copilot/philips-chronicle/index.html",
       screenshot: "assets/img/copilot-philips-chronicle.png",
@@ -216,19 +227,24 @@ const SCORES = {
 // 5) 首页总体结论（给领导看的一句话总结）
 const SUMMARY = {
   headline:
-    "Kiro 两场都是完成度第一，但它也是最慢的；Antigravity 用 1/34 的时间拿到了 Kiro 六成四的分数。",
+    "Kiro 两场都是完成度第一，但它也是最慢的；Antigravity 用 1/34 的时间拿到了 Kiro 六成五的分数。",
   body:
     "四个模型的差距不在「能不能跑」，而在「愿意花多少时间把事做完」。" +
-    "Kiro 两场合计花了 68.5 分钟，换来 89% 的得分率——编年史那份叙事最完整、财务与产品数据经核查全部属实" +
+    "Kiro 两场合计花了 68.5 分钟，换来 88% 的得分率——赛车那场是唯一把「大世界 / WASD / 好玩」三条硬要求全部做到、且交付前真正自测过的一家；" +
+    "编年史那份叙事最完整、财务与产品数据经核查全部属实" +
     "（€17.8B、Q4 +7% 与官方财报一致，甚至引用到了五周前才通过 FDA 认证的 Alturion 超声平台），也是唯一实现无障碍降级的。" +
-    "GitHub Copilot 用 21 分钟拿到 71%，全程零渲染缺陷、加载最快，是「不惊艳但不会出事」的那一类。" +
+    "它唯一的明显短板是编年史用了近纯黑的暗色主题（实测底色亮度 7，四份中唯一），与飞利浦白底 + 品牌蓝的对外体系不符，直接对外用需要重做配色。" +
+    "GitHub Copilot 用 21 分钟拿到 70%，编年史零渲染缺陷、加载最快，是「不惊艳但不会出事」的那一类；" +
+    "但赛车那场实测出一个必现问题——键盘只读 e.key 未用 e.code，中文输入法激活时 WASD 完全失效、车辆时速归零，" +
+    "而 WASD 正是提示词里点名的硬要求，说明它的「自己验证」没有覆盖中文办公的真实环境。" +
     "Antigravity 两场只用了 2 分钟就拿到 57%，配色观感甚至优于 Copilot，但内容最薄、且手机与平板均横向溢出。" +
     "Codex 交出了四份里画面最好看的编年史（唯一使用真实实拍照片），却把终端输出混进了 HTML 导致正文配色变量失效——" +
-    "首屏看不出问题，正文区的米色底与品牌蓝全丢，站内可切换修复版对照。它花了 30 分钟拿到 51%，投入产出比最低。",
+    "首屏看不出问题，正文区的米色底与品牌蓝全丢，站内可切换修复版对照。它花了 30 分钟拿到 52%，投入产出比最低。",
   recommendation:
-    "交付质量优先、能等的场景选 Kiro；日常迭代与稳定产出选 GitHub Copilot（21 分钟拿 71%，时间性价比最高）；" +
+    "交付质量优先、能等的场景选 Kiro（但对外材料要额外交代配色规范）；日常迭代与稳定产出选 GitHub Copilot（21 分钟拿 70%，时间性价比最高）；" +
     "只需要快速起稿或视觉方案选 Antigravity；Codex 视觉能力最强但需要人工检查收尾，适合做视觉稿而非直接交付。",
   caveat:
     "已完成 3 个场景中的 2 个，四个模型两场阵容一致，总分可直接比较。" +
-    "评分含客观实测（渲染缺陷、响应式、无障碍、性能、内容量）与主观判断（视觉观感、叙事质量）两部分；耗时为实际生成时长，不计入总分。",
+    "评分含客观实测（渲染缺陷、响应式、无障碍、性能、内容量、键盘兼容性）与主观判断（视觉观感、叙事质量）两部分；耗时为实际生成时长，不计入总分。" +
+    "两场均按提示词原文的硬要求逐条核对，指令遵循分以此为准。",
 };
