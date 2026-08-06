@@ -91,13 +91,23 @@ function overallRanking() {
 
 /** 单场景排名（只含该场景参赛模型） */
 function scenarioRanking(scenarioId) {
-  return scenarioAIs(scenarioId)
+  const rows = scenarioAIs(scenarioId)
     .map((ai) => ({
       ai,
       rec: (SCORES[scenarioId] || {})[ai.id],
       total: scenarioTotal(scenarioId, ai.id),
     }))
     .sort((a, b) => b.total - a.total);
+
+  // 标准竞赛名次：同分并列，后续名次跳号（1,2,3,3,5）
+  rows.forEach((r, i) => {
+    r.rank = i > 0 && r.total === rows[i - 1].total ? rows[i - 1].rank : i + 1;
+    r.tied = false;
+  });
+  rows.forEach((r) => {
+    r.tied = rows.filter((x) => x.rank === r.rank).length > 1;
+  });
+  return rows;
 }
 
 /* ---------- Chart.js ---------- */

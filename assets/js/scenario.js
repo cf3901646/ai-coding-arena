@@ -71,7 +71,7 @@ function renderDemos(scenario) {
 
   el.innerHTML = scenarioRanking(scenario.id)
     .map((row, i) => {
-      const { ai, rec, total } = row;
+      const { ai, rec, total, rank, tied } = row;
       const path = "../" + rec.demoPath;
       const pros = (rec.pros || [])
         .map((p) => `<span class="pill good">${p}</span>`)
@@ -92,10 +92,20 @@ function renderDemos(scenario) {
         </div>`;
       }).join("");
 
+      const alt = rec.altDemo;
+      const frameId = `frm-${scenario.id}-${ai.id}`;
+      const toggle = alt
+        ? `<div class="demo-switch" data-frame="${frameId}">
+             <button type="button" class="ds-btn is-on" data-src="${path}">原始产出</button>
+             <button type="button" class="ds-btn" data-src="../${alt.path}">${alt.label}</button>
+             <span class="ds-note">${alt.note}</span>
+           </div>`
+        : "";
+
       return `
-      <article class="demo ${i === 0 ? "is-first" : ""}">
+      <article class="demo ${rank === 1 ? "is-first" : ""}">
         <div class="demo-head">
-          <span class="rank">${i === 0 ? "第 1 名" : "第 " + (i + 1) + " 名"}</span>
+          <span class="rank">${tied ? "并列第 " + rank + " 名" : "第 " + rank + " 名"}</span>
           <h3><i class="dot" style="background:${ai.color}"></i>${ai.name}</h3>
           <span class="vendor">${ai.vendor}</span>
           <span class="spacer"></span>
@@ -114,9 +124,11 @@ function renderDemos(scenario) {
           }</div></div>
         </div>
 
+        ${toggle}
+
         <div class="demo-body">
           <div class="demo-frame">
-            <iframe src="${path}" title="${ai.name} — ${scenario.title}"
+            <iframe id="${frameId}" src="${path}" title="${ai.name} — ${scenario.title}"
               loading="lazy"
               allow="fullscreen; autoplay; gamepad; pointer-lock"
               allowfullscreen></iframe>
@@ -134,8 +146,19 @@ function renderDemos(scenario) {
       </article>`;
     })
     .join("");
-}
 
+  el.querySelectorAll(".demo-switch").forEach((sw) => {
+    const frame = document.getElementById(sw.dataset.frame);
+    sw.querySelectorAll(".ds-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.classList.contains("is-on")) return;
+        sw.querySelectorAll(".ds-btn").forEach((b) => b.classList.remove("is-on"));
+        btn.classList.add("is-on");
+        if (frame) frame.src = btn.dataset.src;
+      });
+    });
+  });
+}
 /* ---------- Table ---------- */
 function renderScenarioTable(scenario) {
   const el = document.getElementById("scenario-table");
@@ -152,11 +175,13 @@ function renderScenarioTable(scenario) {
 
   const body = scenarioRanking(scenario.id)
     .map(
-      (r, i) => `
-    <tr class="${i === 0 ? "is-first" : ""}">
+      (r) => `
+    <tr class="${r.rank === 1 ? "is-first" : ""}">
       <td class="name">
         <span class="cell-name">
-          <span class="rank-num">${i + 1}</span>
+          <span class="rank-num"${r.tied ? ' title="并列名次"' : ""}>${r.rank}${
+        r.tied ? "=" : ""
+      }</span>
           <i class="dot" style="background:${r.ai.color}"></i>
           ${r.ai.name}
         </span>
