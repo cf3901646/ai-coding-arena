@@ -22,21 +22,35 @@ function renderHeroStats() {
   const rated = ratedScenarios();
   const rank = overallRanking();
   const top = rank[0];
-  const fastest = AIS.map((ai) => {
-    const mins = rated
-      .filter((s) => isParticipant(s.id, ai.id))
-      .map((s) => ((SCORES[s.id] || {})[ai.id] || {}).minutes)
-      .filter((m) => typeof m === "number");
-    return { ai, mins: mins.length ? Math.min(...mins) : Infinity };
-  }).sort((a, b) => a.mins - b.mins)[0];
+
+  const totalMins = (aiId) =>
+    rated
+      .filter((s) => isParticipant(s.id, aiId))
+      .map((s) => ((SCORES[s.id] || {})[aiId] || {}).minutes)
+      .filter((m) => typeof m === "number")
+      .reduce((a, b) => a + b, 0);
+
+  const withTime = rank.filter((r) => totalMins(r.ai.id) > 0);
+  // 时间性价比 = 每分钟拿到的分数
+  const bestValue = withTime
+    .slice()
+    .sort((a, b) => b.total / totalMins(b.ai.id) - a.total / totalMins(a.ai.id))[0];
 
   el.innerHTML = `
     <div class="hero-stat"><dt>参评模型</dt><dd>${rank.length}</dd></div>
     <div class="hero-stat"><dt>测试场景</dt><dd>${rated.length}<small>/ ${SCENARIOS.length}</small></dd></div>
-    <div class="hero-stat"><dt>综合第一</dt><dd style="font-size:22px">${top ? top.ai.name : "—"}</dd></div>
-    <div class="hero-stat"><dt>出图最快</dt><dd style="font-size:22px">${
-      fastest && fastest.mins !== Infinity ? fastest.ai.name : "—"
-    }</dd></div>`;
+    <div class="hero-stat"><dt>质量第一</dt><dd style="font-size:22px">${
+      top ? top.ai.name : "—"
+    }<small>${
+    top ? " " + top.pct.toFixed(0) + "% · " + totalMins(top.ai.id) + " 分钟" : ""
+  }</small></dd></div>
+    <div class="hero-stat"><dt>效率第一</dt><dd style="font-size:22px">${
+      bestValue ? bestValue.ai.name : "—"
+    }<small>${
+    bestValue
+      ? " " + bestValue.pct.toFixed(0) + "% · " + totalMins(bestValue.ai.id) + " 分钟"
+      : ""
+  }</small></dd></div>`;
 }
 
 /* ---------- Verdict ---------- */
@@ -76,9 +90,9 @@ function renderPodium() {
         <span class="podium-name">
           <i class="dot" style="background:${r.ai.color}"></i>
           ${r.ai.name}
-          <span class="sub">${r.ai.vendor} · 参赛 ${r.joined} 场</span>
+          <span class="sub">${r.ai.vendor}</span>
         </span>
-        <span class="podium-score">${r.pct.toFixed(0)}%<small> · ${r.total}/${
+        <span class="podium-score">${r.total}<small> / ${
         r.joined * perMax
       }</small></span>
       </div>`;
@@ -123,9 +137,17 @@ function renderOverallTable() {
   const head = `
     <tr>
       <th>模型</th>
-      ${rated.map((s) => `<th>${s.title}</th>`).join("")}
-      <th>得分率</th>
+      ${rated.map((s) => `<th>${s.short || s.title}</th>`).join("")}
+      <th>总分</th>
+      <th>耗时</th>
     </tr>`;
+
+  const minsOf = (aiId) =>
+    rated
+      .filter((s) => isParticipant(s.id, aiId))
+      .map((s) => ((SCORES[s.id] || {})[aiId] || {}).minutes)
+      .filter((m) => typeof m === "number")
+      .reduce((a, b) => a + b, 0);
 
   const body = rank
     .map(
@@ -145,7 +167,10 @@ function renderOverallTable() {
             : `<td>${v}<span style="opacity:.4"> / ${perMax}</span></td>`
         )
         .join("")}
-      <td class="total">${r.pct.toFixed(0)}%</td>
+      <td class="total">${r.total}<span style="opacity:.4"> / ${r.max}</span><br><span style="opacity:.5;font-size:11px;font-weight:600">${r.pct.toFixed(
+        0
+      )}%</span></td>
+      <td>${minsOf(r.ai.id) ? minsOf(r.ai.id) + "<span style=\"opacity:.4\"> 分</span>" : "—"}</td>
     </tr>`
     )
     .join("");
@@ -157,7 +182,7 @@ function renderOverallTable() {
         <tbody>${body}</tbody>
       </table>
     </div>
-    <div class="table-note">单场景满分 ${perMax} 分（${CRITERIA.length} 项维度 × 10）。两场参赛阵容不同，因此排名按<strong>已参赛场次的平均得分率</strong>计算，避免参赛场次多的模型被总分累加拉高。</div>`;
+    <div class="table-note">单场景满分 ${perMax} 分（${CRITERIA.length} 项维度 × 10）。四个模型在两个场景中阵容一致，总分可直接比较。耗时为两场累计的实际生成时长，不计入总分，供评估投入产出比参考。</div>`;
 }
 
 /* ---------- Radar ---------- */
