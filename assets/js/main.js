@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCriteria();
   renderOneMoreThing();
   renderFooter();
+  initNavSpy();
 });
 
 /* ---------- Hero stats ---------- */

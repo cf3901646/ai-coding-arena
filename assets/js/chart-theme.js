@@ -116,6 +116,9 @@ function applyChartDefaults() {
   Chart.defaults.font.family = T.sans;
   Chart.defaults.font.size = 12;
   Chart.defaults.color = T.textSec;
+  // Canvas 文字没有子像素抗锯齿，1x 屏上会比 DOM 文字明显发虚。
+  // 强制以不低于 2x 的分辨率绘制再由浏览器缩放，可显著提升清晰度。
+  Chart.defaults.devicePixelRatio = Math.max(2, window.devicePixelRatio || 1);
 }
 
 function makeRadarDatasets(getScore, ais) {
@@ -197,6 +200,57 @@ function buildRadarConfig(datasets) {
 }
 
 /* ---------- Shared chrome ---------- */
+function initNavSpy() {
+  const nav = document.querySelector(".nav-links");
+  if (!nav) return;
+
+  const links = Array.from(nav.querySelectorAll("a"));
+  const anchors = links
+    .map((a) => {
+      const href = a.getAttribute("href") || "";
+      if (href.charAt(0) !== "#") return null;
+      const el = document.getElementById(href.slice(1));
+      return el ? { link: a, el: el } : null;
+    })
+    .filter(Boolean);
+  if (!anchors.length) return;
+
+  const home = links.find((a) => a.classList.contains("active")) || links[0];
+  const header = document.querySelector(".site-header");
+
+  function update() {
+    const probe = (header ? header.getBoundingClientRect().bottom : 0) + 24;
+    let current = null;
+    anchors.forEach((a) => {
+      const r = a.el.getBoundingClientRect();
+      if (r.top <= probe && r.bottom > probe) current = a.link;
+    });
+    // 页面滚到底时最后一个锚点区块可能撑不满视口，仍视为当前位置
+    if (!current) {
+      const atBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 4;
+      if (atBottom) current = anchors[anchors.length - 1].link;
+    }
+    const target = current || home;
+    links.forEach((a) => a.classList.toggle("active", a === target));
+  }
+
+  let ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      update();
+      ticking = false;
+    });
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  update();
+}
+
 function renderFooter() {
   const el = document.querySelector("[data-footer]");
   if (!el) return;
