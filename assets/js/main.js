@@ -1,128 +1,193 @@
-/**
- * 通用渲染逻辑：首页总览雷达图 + 汇总表；场景页由 scenario.js 单独处理
- * 依赖 scores-data.js 提供的 AIS / SCENARIOS / CRITERIA / SCORES / SUMMARY
- */
+/* =========================================================
+   Home page rendering
+   ========================================================= */
 
-function computeOverallAverage(aiId) {
-  let total = 0, count = 0;
-  SCENARIOS.forEach((sc) => {
-    const rec = SCORES[sc.id] && SCORES[sc.id][aiId];
-    if (!rec) return;
-    CRITERIA.forEach((c) => {
-      total += rec.criteria[c.key] || 0;
-      count++;
-    });
-  });
-  return count ? +(total / count).toFixed(2) : 0;
-}
+document.addEventListener("DOMContentLoaded", () => {
+  applyChartDefaults();
+  renderHeroStats();
+  renderVerdict();
+  renderPodium();
+  renderScenarioCards();
+  renderOverallTable();
+  renderRadar();
+  renderCriteria();
+  renderFooter();
+});
 
-function computeCriterionAverage(aiId, criterionKey) {
-  let total = 0, count = 0;
-  SCENARIOS.forEach((sc) => {
-    const rec = SCORES[sc.id] && SCORES[sc.id][aiId];
-    if (!rec) return;
-    total += rec.criteria[criterionKey] || 0;
-    count++;
-  });
-  return count ? +(total / count).toFixed(2) : 0;
-}
-
-function renderSummary() {
-  const el = document.getElementById("summary-content");
+/* ---------- Hero stats ---------- */
+function renderHeroStats() {
+  const el = document.getElementById("hero-stats");
   if (!el) return;
+
+  const rated = ratedScenarios();
+  const rank = overallRanking();
+  const top = rank[0];
+  const fastest = AIS.map((ai) => {
+    const mins = rated
+      .map((s) => (SCORES[s.id][ai.id] || {}).minutes)
+      .filter((m) => typeof m === "number");
+    return { ai, mins: mins.length ? Math.min(...mins) : Infinity };
+  }).sort((a, b) => a.mins - b.mins)[0];
+
   el.innerHTML = `
-    <p>${SUMMARY.headline}</p>
-    <p><strong>推荐：</strong>${SUMMARY.recommendation}</p>
-  `;
+    <div class="hero-stat"><dt>参评模型</dt><dd>${AIS.length}</dd></div>
+    <div class="hero-stat"><dt>测试场景</dt><dd>${rated.length}<small>/ ${SCENARIOS.length}</small></dd></div>
+    <div class="hero-stat"><dt>综合第一</dt><dd style="font-size:22px">${top.ai.name}</dd></div>
+    <div class="hero-stat"><dt>出图最快</dt><dd style="font-size:22px">${
+      fastest && fastest.mins !== Infinity ? fastest.ai.name : "—"
+    }</dd></div>`;
 }
 
+/* ---------- Verdict ---------- */
+function renderVerdict() {
+  const el = document.getElementById("verdict");
+  if (!el) return;
+
+  el.innerHTML = `
+    <div class="verdict-main">
+      <p class="quote">${SUMMARY.headline.replace(
+        /Kiro/g,
+        "<strong>Kiro</strong>"
+      )}</p>
+      <div class="verdict-notes">
+        <div class="verdict-note"><b>结论依据</b><span>${SUMMARY.body}</span></div>
+        <div class="verdict-note"><b>选型建议</b><span>${SUMMARY.recommendation}</span></div>
+        <div class="verdict-note"><b>数据范围</b><span>${SUMMARY.caveat}</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="section-label">综合排名</p>
+      <div class="podium" id="podium"></div>
+    </div>`;
+}
+
+/* ---------- Podium ---------- */
+function renderPodium() {
+  const el = document.getElementById("podium");
+  if (!el) return;
+
+  el.innerHTML = overallRanking()
+    .map((r, i) => {
+      const rated = ratedScenarios().length;
+      const perMax = CRITERIA.length * 10;
+      return `
+      <div class="podium-row ${i === 0 ? "is-first" : ""}">
+        <span class="podium-rank">${String(i + 1).padStart(2, "0")}</span>
+        <span class="podium-name">
+          <i class="dot" style="background:${r.ai.color}"></i>
+          ${r.ai.name}
+          <span class="sub">${r.ai.vendor}</span>
+        </span>
+        <span class="podium-score">${r.total}<small> / ${
+        rated * perMax
+      }</small></span>
+      </div>`;
+    })
+    .join("");
+}
+
+/* ---------- Scenario cards ---------- */
 function renderScenarioCards() {
   const el = document.getElementById("scenario-grid");
   if (!el) return;
-  el.innerHTML = SCENARIOS.map((sc) => `
-    <div class="card">
-      <h3>${sc.title}</h3>
-      <p class="desc">${sc.desc}</p>
-      <a class="link-btn" href="${sc.page}">查看4个AI对比 →</a>
-    </div>
-  `).join("");
+
+  el.innerHTML = SCENARIOS.map((s, i) => {
+    const has = scenarioHasData(s.id);
+    const winner = has ? scenarioRanking(s.id)[0] : null;
+    return `
+    <a class="scenario-card" href="${s.page}">
+      <span class="idx">场景 ${String(i + 1).padStart(2, "0")}</span>
+      <h3>${s.title}</h3>
+      <p>${s.desc}</p>
+      <div class="foot">
+        ${
+          winner
+            ? `<span class="winner-chip"><i class="dot" style="background:${winner.ai.color}"></i>领先 · ${winner.ai.name}</span>`
+            : `<span class="badge">待评测</span>`
+        }
+        <span class="arrow">→</span>
+      </div>
+    </a>`;
+  }).join("");
 }
 
+/* ---------- Overall table ---------- */
 function renderOverallTable() {
   const el = document.getElementById("overall-table");
   if (!el) return;
 
-  // 按综合平均分从高到低排序 AI 列顺序，方便直接看出名次
-  const rankedAis = [...AIS].sort(
-    (a, b) => computeOverallAverage(b.id) - computeOverallAverage(a.id)
-  );
+  const rated = ratedScenarios();
+  const rank = overallRanking();
+  const perMax = CRITERIA.length * 10;
 
-  const medals = ["🥇", "🥈", "🥉"];
-  const rankRow = `<tr><td>排名</td>${rankedAis
-    .map((ai, i) => `<td>${medals[i] || i + 1}</td>`)
-    .join("")}</tr>`;
+  const head = `
+    <tr>
+      <th>模型</th>
+      ${rated.map((s) => `<th>${s.title}</th>`).join("")}
+      <th>总分</th>
+      <th>得分率</th>
+    </tr>`;
 
-  const rows = CRITERIA.map((c) => {
-    const cells = rankedAis
-      .map((ai) => `<td>${computeCriterionAverage(ai.id, c.key)}</td>`)
-      .join("");
-    return `<tr><td>${c.label}</td>${cells}</tr>`;
-  }).join("");
-
-  const totalRow = `<tr style="font-weight:700;"><td>综合平均分</td>${rankedAis
-    .map((ai) => `<td>${computeOverallAverage(ai.id)}</td>`)
-    .join("")}</tr>`;
+  const body = rank
+    .map(
+      (r, i) => `
+    <tr class="${i === 0 ? "is-first" : ""}">
+      <td class="name">
+        <span class="cell-name">
+          <span class="rank-num">${i + 1}</span>
+          <i class="dot" style="background:${r.ai.color}"></i>
+          ${r.ai.name}
+        </span>
+      </td>
+      ${r.perScenario
+        .map((v) => `<td>${v}<span style="opacity:.4"> / ${perMax}</span></td>`)
+        .join("")}
+      <td class="total">${r.total}</td>
+      <td>${r.pct.toFixed(0)}%</td>
+    </tr>`
+    )
+    .join("");
 
   el.innerHTML = `
-    <table class="compare-table">
-      <thead>
-        <tr><th>评分维度</th>${rankedAis.map((ai) => `<th>${ai.name}</th>`).join("")}</tr>
-      </thead>
-      <tbody>${rankRow}${rows}${totalRow}</tbody>
-    </table>
-  `;
+    <div class="table-scroll">
+      <table class="data">
+        <thead>${head}</thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+    <div class="table-note">总分 = 已完成场景的 ${CRITERIA.length} 项维度得分之和，单场景满分 ${perMax} 分。仅统计已完成评测的 ${rated.length} 个场景。</div>`;
 }
 
-function renderRadarChart() {
-  const canvas = document.getElementById("radarChart");
-  if (!canvas || typeof Chart === "undefined") return;
-  const datasets = AIS.map((ai) => ({
-    label: ai.name,
-    data: CRITERIA.map((c) => computeCriterionAverage(ai.id, c.key)),
-    borderColor: ai.color,
-    backgroundColor: ai.color + "33",
-    borderWidth: 2,
-    pointBackgroundColor: ai.color,
-  }));
+/* ---------- Radar ---------- */
+function renderRadar() {
+  const cv = document.getElementById("overall-radar");
+  if (!cv || typeof Chart === "undefined") return;
 
-  new Chart(canvas, {
-    type: "radar",
-    data: {
-      labels: CRITERIA.map((c) => c.label),
-      datasets,
-    },
-    options: {
-      responsive: true,
-      scales: {
-        r: {
-          min: 0,
-          max: 10,
-          ticks: { stepSize: 2, color: "#9aa5bd", backdropColor: "transparent" },
-          grid: { color: "#2a3552" },
-          angleLines: { color: "#2a3552" },
-          pointLabels: { color: "#e8ecf5", font: { size: 12 } },
-        },
-      },
-      plugins: {
-        legend: { labels: { color: "#e8ecf5" } },
-      },
-    },
+  const rated = ratedScenarios();
+  if (!rated.length) return;
+
+  const datasets = makeRadarDatasets((aiId, key) => {
+    const sum = rated.reduce(
+      (acc, s) => acc + (SCORES[s.id][aiId].criteria[key] || 0),
+      0
+    );
+    return +(sum / rated.length).toFixed(1);
   });
+
+  new Chart(cv, buildRadarConfig(datasets));
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  renderSummary();
-  renderScenarioCards();
-  renderOverallTable();
-  renderRadarChart();
-});
+/* ---------- Criteria ---------- */
+function renderCriteria() {
+  const el = document.getElementById("criteria-grid");
+  if (!el) return;
+
+  el.innerHTML = CRITERIA.map(
+    (c, i) => `
+    <div class="criterion">
+      <div class="k">${String(i + 1).padStart(2, "0")} · 满分 10</div>
+      <h4>${c.label}</h4>
+      <p>${c.desc || ""}</p>
+    </div>`
+  ).join("");
+}

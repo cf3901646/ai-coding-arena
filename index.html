@@ -1,48 +1,106 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AI 能力对比评测 · 展示首页</title>
-<link rel="stylesheet" href="assets/css/style.css" />
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Coding Arena — 四款 AI 编程助手横向评测</title>
+<meta name="description" content="Antigravity、Codex、Kiro、GitHub Copilot 在三个真实交付场景下的横向能力评测，产出可直接在页面内试用。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<header class="top">
-  <div class="container" style="padding:0;">
-    <h1>4款 AI 能力横向评测</h1>
-    <p>通过 3 个统一场景（简单赛车游戏 / 飞利浦编年史页面 / 数据可视化看板）对比 4 个 AI 的实际产出，辅助团队选型决策。</p>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="brand" href="index.html"><i class="brand-mark"></i>AI Coding Arena</a>
+    <nav class="nav-links">
+      <a href="index.html" class="active">总览</a>
+      <a href="scenarios/racing-game.html">赛车游戏</a>
+      <a href="scenarios/philips-chronicle.html">编年史页面</a>
+      <a href="scenarios/dashboard.html">数据看板</a>
+    </nav>
+    <a class="btn btn-dark btn-sm" href="https://github.com/cf3901646/ai-coding-arena" target="_blank" rel="noopener">GitHub ↗</a>
   </div>
 </header>
 
-<div class="container">
-  <nav class="tabs">
-    <a href="index.html" class="active">总览</a>
-    <a href="scenarios/racing-game.html">赛车游戏</a>
-    <a href="scenarios/philips-chronicle.html">飞利浦编年史</a>
-    <a href="scenarios/dashboard.html">数据可视化看板</a>
-  </nav>
-
-  <div class="summary-card">
-    <h2>评测结论</h2>
-    <div id="summary-content">加载中...</div>
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Internal Evaluation · AI Coding Assistants</p>
+    <h1>四款 AI 编程助手<br>的<em>真实交付</em>能力对比</h1>
+    <p class="lede">
+      同一条指令，分别交给 Antigravity、Codex、Kiro 与 GitHub Copilot，
+      在三个贴近实际工作的场景里各自独立完成。所有产出都原样嵌入本站，
+      可以直接点开试用——不看宣传，只看交付物。
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-accent" href="scenarios/racing-game.html">查看首个场景评测 →</a>
+      <a class="btn" href="#overall">直接看排名</a>
+    </div>
+    <dl class="hero-stats" id="hero-stats"></dl>
   </div>
+</section>
 
-  <h2 class="section-title">测试场景</h2>
-  <div class="grid" id="scenario-grid"></div>
+<main>
 
-  <h2 class="section-title">综合能力雷达图</h2>
-  <div class="chart-wrap">
-    <canvas id="radarChart" height="360"></canvas>
-  </div>
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="section-label">Verdict</p>
+        <h2>评测结论</h2>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+  </section>
 
-  <h2 class="section-title">分维度平均得分表（跨3个场景）</h2>
-  <div id="overall-table"></div>
-</div>
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="section-label">Scenarios</p>
+        <h2>三个测试场景</h2>
+        <p>每个场景对模型的考验不同：游戏考验交互与状态管理，编年史页面考验信息架构与视觉表达，数据看板考验图表能力与数据处理。</p>
+      </div>
+      <div class="scenario-grid" id="scenario-grid"></div>
+    </div>
+  </section>
 
-<footer>由内部 AI 能力评测项目自动生成 · 数据来源：assets/js/scores-data.js</footer>
+  <section class="section" id="overall">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="section-label">Scoreboard</p>
+        <h2>综合评分表</h2>
+        <p>按总分降序排列。每个场景 6 项维度、每项满分 10 分。</p>
+      </div>
+      <div class="split">
+        <div class="table-wrap" id="overall-table"></div>
+        <div class="chart-panel">
+          <h3>六维能力分布</h3>
+          <p class="hint">取各已完成场景的维度均分</p>
+          <div class="chart-box"><canvas id="overall-radar"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="section-label">Method</p>
+        <h2>评分维度</h2>
+        <p>每个维度独立打分（0–10），由同一名评估者在相同环境下人工体验后给出，避免跨人标准漂移。</p>
+      </div>
+      <div class="criteria-grid" id="criteria-grid"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer" data-footer></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="assets/js/scores-data.js"></script>
+<script src="assets/js/chart-theme.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>
