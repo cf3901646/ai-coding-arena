@@ -118,7 +118,9 @@ function renderDemos(scenario) {
           <h3><i class="dot" style="background:${ai.color}"></i>${ai.name}</h3>
           <span class="vendor">${ai.vendor}</span>
           <span class="spacer"></span>
-          <a class="btn btn-sm" href="${path}" target="_blank" rel="noopener">全屏打开 ↗</a>
+          <a class="btn btn-sm demo-open" id="open-${frameId}" href="${path}" target="_blank" rel="noopener">${
+            alt ? "全屏打开原始产出 ↗" : "全屏打开 ↗"
+          }</a>
         </div>
 
         <div class="demo-metrics">
@@ -163,12 +165,18 @@ function renderDemos(scenario) {
 
   el.querySelectorAll(".demo-switch").forEach((sw) => {
     const frame = document.getElementById(sw.dataset.frame);
+    // 「全屏打开」必须跟着切换走，否则切到修复版后新开的仍是原始产出
+    const open = document.getElementById("open-" + sw.dataset.frame);
     sw.querySelectorAll(".ds-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         if (btn.classList.contains("is-on")) return;
         sw.querySelectorAll(".ds-btn").forEach((b) => b.classList.remove("is-on"));
         btn.classList.add("is-on");
         if (frame) frame.src = btn.dataset.src;
+        if (open) {
+          open.href = btn.dataset.src;
+          open.textContent = "全屏打开" + btn.textContent + " ↗";
+        }
       });
     });
   });
